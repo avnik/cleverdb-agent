@@ -1,5 +1,6 @@
 from subprocess import call
 from optparse import OptionParser
+import subprocess
 
 
 def run():
@@ -34,9 +35,10 @@ def run():
         options.host,
         options.source_port,
         options.destination_port)
+
     print "Starting port forwarding..."
-    local_mapping = "%i:localhost:%s" % (options.source_port,
-                                         options.destination_port)
+    local_mapping = "%i:localhost:%i" % (options.destination_port,
+                                         options.source_port)
     destination_mapping = options.host
     """
     -f tells ssh to go into the background (daemonize).
@@ -45,16 +47,28 @@ def run():
     -L specifies the port forwarding
     -i private key file
     """
-    # call(["ssh", "-f", "-N", "-q", "-L", local_mapping, destination_mapping])
-    ssh_options = ["ssh", "-N", "-L", local_mapping, destination_mapping]
+    # ssh -N -R 8080:localhost:3306 vagrant@192.168.100.3 -i key.priv
+    ssh_options = ["ssh", "-N", "-R", local_mapping, destination_mapping]
 
     if options.private_key:
-        # TODO check for key exist?:
         ssh_options.append("-i")
-        ssh_options.append("options.private_key")
+        # TODO: this will later come from api
+        ssh_options.append('key.priv')
 
-    # print ssh_options
-    call(ssh_options)
+    print "SSH options..."
+    print ssh_options
+    # call_res = call(ssh_options)
+    prog = subprocess.Popen(ssh_options, stderr=subprocess.PIPE)
+    call_res = prog.communicate()[1]
+
+    print 'here?...'
+    print call_res
+
+
+# def _get_priv_key():
+#     priv_key = open('key.priv', 'r')
+#
+#     return priv_key.read()
 
 if __name__ == '__main__':
     run()
