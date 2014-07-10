@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import subprocess
 from time import sleep
 
@@ -13,7 +14,6 @@ def run():
     Ex: ssh -N -R 8080:localhost:3306 vagrant@192.168.100.3 -i key.priv
     """
     retry_count = 0
-    ssh_options = ["ssh", "-N", "-R"]
 
     while True:
         # get config from api:
@@ -21,6 +21,8 @@ def run():
         local_part = "%i:localhost:%i" % (
             config['slave_port'],
             config['master_port'])
+
+        ssh_options = ["ssh", "-N", "-R"]
         ssh_options.append(local_part)
         ssh_options.append(config['slave_host'])
         ssh_options.append("-i")

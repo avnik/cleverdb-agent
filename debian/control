@@ -1,0 +1,15 @@
+Source: cleverdb-agent
+Section: misc
+Priority: optional
+Maintainer: Alexander V. Nikolaev <avn@labs.sendgrid.com>
+Build-Depends: debhelper (>= 8), dpkg-dev (>= 1.16.1~)
+Standards-Version: 3.9.5
+Homepage: https://cleverdb.io
+Vcs-Git: git://github.com/sendgridlabs/cleverdb-agent.git
+Vcs-Browser: https://github.com/sendgridlabs/cleverdb-agent
+
+Package: cleverdb-agent
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, python
+Description: Cleverdb master agent
+ This is the agent to be installed on customer's end
