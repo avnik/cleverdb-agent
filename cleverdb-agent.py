@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import subprocess
 from time import sleep
 
