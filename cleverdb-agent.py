@@ -13,7 +13,6 @@ def run():
     Ex: ssh -N -R 8080:localhost:3306 vagrant@192.168.100.3 -i key.priv
     """
     retry_count = 0
-    max_retry = 100
     ssh_options = ["ssh", "-N", "-R"]
 
     while True:
@@ -33,9 +32,6 @@ def run():
         call_res = prog.communicate()
 
         # ssh tunnel broken at this point
-        if retry_count >= max_retry:
-            print "Max retry, can't open SSH tunnel"
-            break
 
         # retry getting latest config from api:
         retry_count += 1
@@ -46,7 +42,7 @@ def run():
 
 def _get_config():
     # TODO: get from api
-    return {'slave_host': "192.168.100.3",
+    return {'slave_host': "192.168.100.4",
             'slave_port': 8080,
             'master_port': 3306,
             'private_key': "key.priv"}
