@@ -15,9 +15,9 @@ def run():
     """
     retry_count = 0
     max_retry = 100
-    ssh_options = ["ssh", "-N", "-R"]
 
     while True:
+        ssh_options = ["ssh", "-N", "-R"]
         # get config from api:
         config = _get_config()
         local_part = "%i:localhost:%i" % (
