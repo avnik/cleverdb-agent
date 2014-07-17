@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+cat <<EOT
+This is convinience script, use tools like git-buildpackage strongly encouraged.
+EOT
+
+if ! test -x /usr/bin/debuild; then
+    cat <<EOT
+You need to install devscripts package to proceed with build.
+Example:
+  apt-get install devscripts
+
+Later build process can ask to install more build requirements
+EOT
+fi
+
+debuild clean
+debuild binary
