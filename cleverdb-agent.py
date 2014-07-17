@@ -44,10 +44,11 @@ def run():
 
 def _get_config():
     # TODO: get from api
-    return {'slave_host': "192.168.100.4",
+    return {'slave_host': "192.168.100.3",
             'slave_port': 8080,
             'master_port': 3306,
-            'private_key': "key.priv"}
+            'private_key': "key.priv",
+            }
 
 
 if __name__ == '__main__':
