@@ -1,7 +1,9 @@
 #!/usr/bin/python
 import subprocess
 from time import sleep
+import os
 
+KEY_PRIV = os.environ.get("CLEVERDB_SSH_KEY", "/usr/share/cleverdb-agent/key.priv")
 
 def run():
     """
@@ -47,7 +49,7 @@ def _get_config():
     return {'slave_host': "192.168.100.4",
             'slave_port': 8080,
             'master_port': 3306,
-            'private_key': "key.priv"}
+            'private_key': KEY_PRIV}
 
 
 if __name__ == '__main__':
