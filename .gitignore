@@ -6,3 +6,4 @@ debian/cleverdb-agent
 debian/cleverdb-agent.debhelper.log
 debian/cleverdb-agent.substvars
 debian/files
+debian/*.debhelper

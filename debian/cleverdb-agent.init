@@ -1,0 +1,56 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          cleverdb-agent
+# Required-Start:    $remote_fs
+# Required-Stop:     $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: cleverdb-agent
+# Description:       cleverdb.io master agent
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+[ -f /etc/default/rcS ] && . /etc/default/rcS
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON=/usr/bin/cleverdb-agent
+DESC="cleverdb.io master agent"
+NAME="cleverdb-agent"
+PIDFILE=/var/run/cleverdb-agent.pid
+CONF=/etc/cleverdb-agent/config
+
+test -x $DAEMON || exit 0
+
+case "$1" in
+  start)
+	log_daemon_msg "Starting $DESC" "$NAME"
+	start-stop-daemon --start --quiet --background --pidfile $PIDFILE --make-pid --startas $DAEMON $DAEMON
+	log_end_msg $?
+	;;
+  stop)
+	log_daemon_msg "Stopping $DESC" "$NAME"
+	start-stop-daemon --stop --quiet --pidfile $PIDFILE --oknodo --startas $DAEMON
+	rm -f $PIDFILE
+	log_end_msg $?
+	;;
+  restart)
+  	$0 stop
+	sleep 3
+	$0 start
+	;;
+  force-reload)
+	if start-stop-daemon --stop --test --quiet --pidfile $PIDFILE --startas $DAEMON $CONF ; then
+		$0 restart
+	fi
+	;;
+  status)
+	status_of_proc $DAEMON $NAME && exit 0 || exit $?
+	;;
+  *)
+	log_success_msg "Usage: /etc/init.d/cleverdb-agent {start|stop|restart|force-reload|status}"
+	exit 1
+	;;
+esac
+
+exit 0

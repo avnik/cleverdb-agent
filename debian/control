@@ -10,6 +10,6 @@ Vcs-Browser: https://github.com/sendgridlabs/cleverdb-agent
 
 Package: cleverdb-agent
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, python
+Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base, python
 Description: Cleverdb master agent
  This is the agent to be installed on customer's end
