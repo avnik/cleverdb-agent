@@ -96,18 +96,30 @@ if [ -n "$CD_API_KEY" ]; then
     apikey=$CD_API_KEY
 fi
 
+if [ -n "$CD_DB_ID" ]; then
+    dbid=$CD_DB_ID
+fi
+
 if [ ! $apikey ]; then
     printf "\033[31m
-API key not available in CD_API_KEY environment variable.
+CD_API_KEY environment variable does not exist.
 
-Example usage: CD_API_KEY=sample_api_key ${BASH_SOURCE[0]}\n\033[0m\n"
+Example usage: CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
+    exit 1;
+fi
+
+if [ ! $dbid ]; then
+    printf "\033[31m
+CD_DB_ID environment variable does not exist.
+
+Example usage: CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
     exit 1;
 fi
 
 # Install the necessary package sources
 if [ $OS = "RedHat" ]; then
     echo -e "\033[34m\n* Installing YUM sources\n\033[0m"
-    $sudo_cmd sh -c "echo -e '[datadog]\nname = SendGrid Labs.\nbaseurl = $yum_repo/rpm/\nenabled=1\ngpgcheck=0\npriority=1' > /etc/yum.repos.d/$app_name.repo"
+    $sudo_cmd sh -c "echo -e '[sendgrid]\nname = SendGrid.\nbaseurl = $yum_repo/rpm/\nenabled=1\ngpgcheck=0\npriority=1' > /etc/yum.repos.d/$app_name.repo"
 
     printf "\033[34m* Installing the $app_name package\n\033[0m\n"
 
@@ -118,8 +130,9 @@ if [ $OS = "RedHat" ]; then
     fi
 elif [ $OS = "Debian" -o $OS = "Ubuntu" ]; then
     printf "\033[34m\n* Installing APT package sources\n\033[0m\n"
-    $sudo_cmd sh -c "echo 'deb $apt_repo unstable main' > /etc/apt/sources.list.d/$app_name.list"
-    $sudo_cmd apt-key adv --recv-keys --keyserver $apt_key_repo C7A7DA52
+    $sudo_cmd sh -c "echo 'deb $apt_repo staging main' > /etc/apt/sources.list.d/$app_name.list"
+    $sudo_cmd wget -O - $apt_repo/key.asc | apt-key add -
+    #$sudo_cmd apt-key adv --recv-keys --keyserver $apt_key_repo C7A7DA52
 
     printf "\033[34m\n* Installing the $app_name package\n\033[0m\n"
     $sudo_cmd apt-get update
@@ -133,20 +146,22 @@ else
 Your OS or distribution is not supported by this install script.
 Please follow the instructions on $app_name setup page:
 
-    http://cleverdb.io\n\033[0m\n"
+    $app_url\n\033[0m\n"
     exit;
 fi
 
 printf "\033[34m\n* Adding your API key to $app_name configuration: $config_file\n\033[0m\n"
+printf "\033[34m\n* $apikey $dbid\n\033[0m\n"
 
-if $DDBASE; then
-    $sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' /etc/cleverdb-agent/datadog.conf.example | sed 's/# dogstatsd_target :.*/dogstatsd_target: https:\/\/app.datadoghq.com/' > /etc/dd-agent/datadog.conf"
-else
-    $sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' /etc/cleverdb-agent/datadog.conf.example > /etc/dd-agent/datadog.conf"
-fi
+#if $DDBASE; then
+    #$sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' /etc/cleverdb-agent/datadog.conf.example | sed 's/# dogstatsd_target :.*/dogstatsd_target: https:\/\/app.datadoghq.com/' > /etc/dd-agent/datadog.conf"
+#else
+    #$sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' /etc/cleverdb-agent/datadog.conf.example > /etc/dd-agent/datadog.conf"
+#fi
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$sudo_cmd /etc/init.d/cleverdb-agent restart
+#$sudo_cmd /etc/init.d/cleverdb-agent restart
+$sudo_cmd cleverdb-agent &
 
 # Datadog "base" installs don't have a forwarder, so we can't use the same
 # check for the initial payload being sent.
@@ -170,42 +185,35 @@ fi
 
 # Wait for metrics to be submitted by the forwarder
 printf "\033[32m
-Your Agent has started up for the first time. We're currently verifying that
-data is being submitted. You should see your Agent show up in Datadog shortly
-at:
+Your $app_name has started up for the first time.\n\033[0m"
 
-    https://app.datadoghq.com/infrastructure\033[0m
+#c=0
+#while [ "$c" -lt "30" ]; do
+#    sleep 1
+#    echo -n "."
+#    c=$(($c+1))
+#done
 
-Waiting for metrics..."
-
-c=0
-while [ "$c" -lt "30" ]; do
-    sleep 1
-    echo -n "."
-    c=$(($c+1))
-done
-
-$dl_cmd http://127.0.0.1:17123/status?threshold=0 > /dev/null 2>&1
-success=$?
-while [ "$success" -gt "0" ]; do
-    sleep 1
-    echo -n "."
-    $dl_cmd http://127.0.0.1:17123/status?threshold=0 > /dev/null 2>&1
-    success=$?
-done
+#$dl_cmd http://127.0.0.1:17123/status?threshold=0 > /dev/null 2>&1
+#success=$?
+#while [ "$success" -gt "0" ]; do
+#    sleep 1
+#    echo -n "."
+#    $dl_cmd http://127.0.0.1:17123/status?threshold=0 > /dev/null 2>&1
+#    success=$?
+#done
 
 # Metrics are submitted, echo some instructions and exit
 printf "\033[32m
+$app_name is running and functioning properly. It will continue to run in the
+background.
 
-Your Agent is running and functioning properly. It will continue to run in the
-background and submit metrics to Datadog.
+If you ever want to stop the $app_name, run:
 
-If you ever want to stop the Agent, run:
-
-    sudo /etc/init.d/datadog-agent stop
+    sudo /etc/init.d/$app_name stop
 
 And to run it again run:
 
-    sudo /etc/init.d/datadog-agent start
+    sudo /etc/init.d/$app_name start
 
 \033[0m"

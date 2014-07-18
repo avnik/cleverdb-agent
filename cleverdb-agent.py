@@ -2,57 +2,100 @@
 import subprocess
 from time import sleep
 import os
+import logging
+import urllib2
+import base64
+import json
 
-KEY_PRIV = os.environ.get("CLEVERDB_SSH_KEY",
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("cleverdb-agent")
+
+KEY_PRIV = os.environ.get("CD_SSH_KEY",
                           "/usr/share/cleverdb-agent/key.priv")
+# TODO: read-in CD_DB_ID from config:
+DB_ID = os.environ.get("CD_DB_ID")
 
 
 def run():
     """
     -f tells ssh to go into the background (daemonize).
     -N tells ssh that you don't want to run a remote command.
-    -q tells ssh to be quiet
     -R remote port forwarding
+    -q tells ssh to be quiet
     -i private key file
 
-    Ex: ssh -N -R 8080:localhost:3306 vagrant@192.168.100.3 -i key.priv
+    Ex: ssh -N -R 6789:localhost:3306 vagrant@192.168.100.3 -i key.priv -p 8080
     """
     retry_count = 0
 
     while True:
         # get config from api:
         config = _get_config()
-        local_part = "%i:localhost:%i" % (
-            config['slave_port'],
+        local_part = "%s:localhost:%s" % (
+            config['container_port'],
             config['master_port'])
 
-        ssh_options = ["ssh", "-N", "-R"]
-        ssh_options.append(local_part)
-        ssh_options.append(config['slave_host'])
-        ssh_options.append("-i")
-        ssh_options.append(config['private_key'])
+        # save private key to disk
+        # key = open("private.key", "w")
+        # key.write(config['ssh_private_key'])
+        # key.close()
 
+        ssh_options = ["ssh"]
+
+        # TODO: generate 2 key pair so we don't have to ignore host checking
+        ssh_options.append("-o")
+        ssh_options.append("UserKnownHostsFile=/dev/null")
+        ssh_options.append("-o")
+        ssh_options.append("StrictHostKeyChecking=no")
+
+        ssh_options.append("-N")
+        ssh_options.append("-R")
+        ssh_options.append(local_part)
+        ssh_options.append("%s@%s" % (config['user'], config['ip']))
+        ssh_options.append("-i")
+        # ssh_options.append(config['ssh_private_key'])
+        ssh_options.append("key.private")
+        ssh_options.append("-p")
+        ssh_options.append(config['port'])
+        print ssh_options
         # start the SSH tunnel
-        print "Starting ssh tunnel..."
-        prog = subprocess.Popen(ssh_options, stdout=subprocess.PIPE)
-        call_res = prog.communicate()
+        logger.info("Starting ssh tunnel...")
+        logger.debug("SSH option is ")
+        logger.debug(ssh_options)
+
+        try:
+            prog = subprocess.Popen(ssh_options, stdout=subprocess.PIPE)
+            prog.communicate()
+        except Exception, e:
+            logger.debug(e)
 
         # ssh tunnel broken at this point
-
         # retry getting latest config from api:
         retry_count += 1
-        print "Sleeping...%i seconds" % retry_count
+        logger.info("Sleeping...%i seconds" % retry_count)
         sleep(retry_count)
-        print "Retrying...%i" % retry_count
+        logger.info("Retrying...%i" % retry_count)
 
 
 def _get_config():
-    # TODO: get from api
-    return {'slave_host': "192.168.100.3",
-            'slave_port': 8080,
-            'master_port': 3306,
-            'private_key': KEY_PRIV}
+    auth = base64.encodestring('%s:%s' % ('cleverdb', 'c13VRvDblc'))[:-1]
+    url = 'http://cleverdb.com/api/agent/%s/configuration' % (DB_ID)
+    req = urllib2.Request(url)
+    req.add_header("Authorization", "Basic %s" % auth)
 
+    retry_count = 0
+    while True:
+        try:
+            handle = urllib2.urlopen(req)
+            res = json.loads(handle.read())
+
+            return res
+        except Exception, e:
+            retry_count += 1
+            logger.info("Retrying to connect to api...")
+            logger.info("Sleeping...%i seconds" % retry_count)
+            sleep(retry_count)
+            logger.error(e)
 
 if __name__ == '__main__':
     run()
