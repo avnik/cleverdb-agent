@@ -2,10 +2,12 @@
 import subprocess
 from time import sleep
 import os
+import sys
 import logging
 import urllib2
 import base64
 import json
+import signal
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("cleverdb-agent")
@@ -15,6 +17,18 @@ KEY_PRIV = os.environ.get("CD_SSH_KEY",
 # TODO: read-in CD_DB_ID from config:
 DB_ID = os.environ.get("CD_DB_ID")
 
+prog = None
+
+def signal_handler(signo, frame):
+    global prog
+    logger.info("Got signqal %s, terminating", signo)
+    if prog:
+        logger.info("Stopping SSH client")
+        prog.send_signal(signal.SIGTERM)
+    sys.exit(0)
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGQUIT, signal_handler)
 
 def run():
     """
@@ -27,6 +41,8 @@ def run():
     Ex: ssh -N -R 6789:localhost:3306 vagrant@192.168.100.3 -i key.priv -p 8080
     """
     retry_count = 0
+
+    global prog
 
     while True:
         # get config from api:
@@ -67,6 +83,8 @@ def run():
             prog.communicate()
         except Exception, e:
             logger.debug(e)
+        finally:
+            prog = None
 
         # ssh tunnel broken at this point
         # retry getting latest config from api:
