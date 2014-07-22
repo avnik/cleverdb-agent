@@ -53,11 +53,10 @@ def run():
         ssh_options.append(local_part)
         ssh_options.append("%s@%s" % (config['user'], config['ip']))
         ssh_options.append("-i")
-        # ssh_options.append(config['ssh_private_key'])
-        ssh_options.append("key.private")
+        ssh_options.append(config['ssh_private_key'])
         ssh_options.append("-p")
         ssh_options.append(config['port'])
-        print ssh_options
+
         # start the SSH tunnel
         logger.info("Starting ssh tunnel...")
         logger.debug("SSH option is ")
