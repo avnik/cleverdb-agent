@@ -2,6 +2,9 @@
 
 This user agent will be installed on customer's machine.
 
+## Install packages for development ##
+	bin/install
+	
 ## Testing ##
 	bin/test
 	

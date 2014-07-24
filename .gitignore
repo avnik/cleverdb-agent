@@ -1,5 +1,9 @@
 .vagrant/
 *.log
+evn/
+*.egg-info/
+*.tox/
+env/
 
 # Generated files from dpkg-dev
 debian/cleverdb-agent
