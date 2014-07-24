@@ -1,4 +1,4 @@
-# cleverdb-agent # https://magnum.travis-ci.com/sendgridlabs/cleverdb-agent.svg?token=Aq5pNsW6rH3CDcNzg2ik
+# cleverdb-agent # [![Build Status](https://magnum.travis-ci.com/sendgridlabs/cleverdb-agent.svg?token=Aq5pNsW6rH3CDcNzg2ik)](https://magnum.travis-ci.com/sendgridlabs/cleverdb-agent)
 
 This user agent will be installed on customer's machine.
 
