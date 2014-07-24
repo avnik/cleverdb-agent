@@ -4,6 +4,7 @@ evn/
 *.egg-info/
 *.tox/
 env/
+.env
 
 # Generated files from dpkg-dev
 debian/cleverdb-agent
