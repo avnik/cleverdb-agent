@@ -2,6 +2,14 @@
 
 This user agent will be installed on customer's machine.
 
+## Requirements and Support ##
+
+This agent support the following:
+
+	Python 2.6 and up
+	Ubuntu
+	CentOS
+
 ## Install packages for development ##
 	bin/install
 	
