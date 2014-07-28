@@ -20,6 +20,7 @@ if py_version < (3, 0, 0):
     import urllib2 as urllib
     from ConfigParser import ConfigParser
     from ConfigParser import Error as ConfigParserError
+
     chr = unichr
     native_string = str
     decode_string = unicode
@@ -47,6 +48,7 @@ logger = logging.getLogger("cleverdb-agent")
 prog = None
 temps = None
 
+
 def signal_handler(signo, frame):
     global prog, temps
     logger.info("Got signqal %s, terminating", signo)
@@ -56,9 +58,12 @@ def signal_handler(signo, frame):
     if temps:
         shutil.rmtree(temps)
     sys.exit(0)
+
+
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGQUIT, signal_handler)
+
 
 class OptionParser(optparse.OptionParser):
     usage = '%prog'
@@ -85,10 +90,9 @@ class OptionParser(optparse.OptionParser):
             dest='log_level',
             default='critical',
             help='logging log level. One of {0}. '
-                'Default: \'{1}\'.'.format(
-                   ', '.join([repr(l) for l in self.SORTED_LEVEL_NAMES]),
-                   'critical'
-                )
+                 'Default: \'{1}\'.'.format(
+                ', '.join([repr(l) for l in self.SORTED_LEVEL_NAMES]),
+                'critical')
         )
         self.add_option(
             '--syslog-level',
@@ -96,10 +100,9 @@ class OptionParser(optparse.OptionParser):
             dest='syslog_level',
             default='info',
             help='logging log level. One of {0}. '
-                'Default: \'{1}\'.'.format(
-                   ', '.join([repr(l) for l in self.SORTED_LEVEL_NAMES]),
-                   'info'
-                )
+                 'Default: \'{1}\'.'.format(
+                ', '.join([repr(l) for l in self.SORTED_LEVEL_NAMES]),
+                'info')
         )
         self.add_option(
             '--syslog-facility',
@@ -119,7 +122,7 @@ class OptionParser(optparse.OptionParser):
             '-U', '--run-as-user',
             dest='user',
             action='store',
-        )   
+        )
         self.add_option(
             '--pid',
             action='store',
@@ -132,7 +135,6 @@ class OptionParser(optparse.OptionParser):
             default='/etc/cleverdb-agent/config'
         )
 
-option_parser = OptionParser()
 
 def run(db_id, api_key):
     """
@@ -173,22 +175,22 @@ def run(db_id, api_key):
         ssh_options.append("-N")
         ssh_options.append("-R")
         ssh_options.append(local_part)
-        ssh_options.append(byte_string("%s@%s" % (config['user'], config['ip'])))
+        ssh_options.append(
+            byte_string("%s@%s" % (config['user'], config['ip'])))
         ssh_options.append("-i")
         ssh_options.append(key.name)
         ssh_options.append("-p")
         ssh_options.append(byte_string(config['container_port']))
 
         # start the SSH tunnel
-        logger.info("Starting ssh tunnel...")
+        logger.info("Starting SSH tunnel...")
         logger.debug("SSH option is ")
         logger.debug(ssh_options)
 
         try:
             prog = subprocess.Popen(ssh_options,
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE
-            )
+                                    stderr=subprocess.PIPE)
             prog.communicate()
         except Exception as e:
             logger.debug(e)
@@ -209,12 +211,15 @@ def run(db_id, api_key):
         retry_count += 1
         logger.info("Sleeping...%i seconds" % retry_count)
         sleep(retry_count)
-        logger.info("Retrying...%i" % retry_count)
+        logger.info("Retrying opening SSH tunnel...%i" % retry_count)
 
 
 def _get_config(db_id, api_key):
-    auth = base64.encodestring(byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
-    url = 'http://cleverdb.com/api/agent/%s/configuration?api_key=%s' % (db_id, api_key)
+    # TODO: remove basic auth
+    auth = base64.encodestring(
+        byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
+    url = 'http://cleverdb.com/api/agent/%s/configuration?api_key=%s' % (
+        db_id, api_key)
     req = urllib.Request(url)
     req.add_header("Authorization", "Basic %s" % auth)
 
@@ -256,7 +261,7 @@ def chugid(runas):
     for group_name in group_list:
         gid = group_list[group_name]
         if (gid not in supgroups_seen
-           and not supgroups_seen.add(gid)):
+            and not supgroups_seen.add(gid)):
             supgroups.append(gid)
 
     if os.getgid() != uinfo.pw_gid:
@@ -331,6 +336,7 @@ def daemonize():
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
 
+
 def setup_logging(log_level, syslog_level, facility):
     logging.basicConfig(level=log_level)
     syslog = logging.handlers.SysLogHandler(address='/dev/log',
@@ -339,13 +345,22 @@ def setup_logging(log_level, syslog_level, facility):
     logger.addHandler(syslog)
     logger.info("Logger initialized")
 
+
 def main():
+    option_parser = OptionParser()
     (options, args) = option_parser.parse_args()
     setup_logging(
         option_parser.LOG_LEVELS[options.log_level],
         option_parser.LOG_LEVELS[options.syslog_level],
         options.facility
     )
+
+    # check if config file exist and readble:
+    if (not os.path.isfile(options.config) or
+            not os.access(options.config, os.R_OK)):
+        logger.critical("Configuration file {0} does not exist or "
+                        "not readable".format(options.config))
+        sys.exit(1)
 
     try:
         cp = ConfigParser()
@@ -364,6 +379,7 @@ def main():
     if options.daemon:
         daemonize()
     run(db_id, api_key)
+
 
 if __name__ == '__main__':
     main()
