@@ -42,6 +42,7 @@ else:
     unicode_string = str
 # end of magic block
 
+__version__ = '0.2.2'
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
@@ -133,6 +134,13 @@ class OptionParser(optparse.OptionParser):
             action='store',
             dest='config',
             default='/etc/cleverdb-agent/config'
+        )
+        self.add_option(
+            '--version',
+            help='version of the agent',
+            dest='version',
+            action='store_true',
+            default=False
         )
 
 
@@ -349,6 +357,11 @@ def setup_logging(log_level, syslog_level, facility):
 def main():
     option_parser = OptionParser()
     (options, args) = option_parser.parse_args()
+
+    # check for --version
+    if options.version:
+        exit(__version__)
+
     setup_logging(
         option_parser.LOG_LEVELS[options.log_level],
         option_parser.LOG_LEVELS[options.syslog_level],
