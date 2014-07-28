@@ -1,5 +1,10 @@
-cleverdb-agent (0.1) UNRELEASED; urgency=medium
+cleverdb-agent (0.2) UNRELEASED; urgency=medium
 
+  [ Alexander V. Nikolaev ]
   * Initial release.
 
- -- Alexander V. Nikolaev <avn@labs.sendgrid.com>  Thu, 10 Jul 2014 19:13:40 +0300
+  [ Kien Pham ]
+  * New release with options to deamonize and stop script correctly
+  * Correct package versioning
+
+ -- Kien Pham <kien@sendgrid.com>  Mon, 28 Jul 2014 21:30:37 +0000

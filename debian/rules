@@ -5,4 +5,3 @@
 override_dh_install:
 	dh_install
 	install -m755 cleverdb-agent.py debian/cleverdb-agent/usr/bin/cleverdb-agent
-	install -m644 key.priv debian/cleverdb-agent/usr/share/cleverdb-agent/key.priv
