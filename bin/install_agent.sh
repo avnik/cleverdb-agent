@@ -9,7 +9,7 @@ apt_repo="http://apt.cleverdb.io"
 apt_key_repo="hkp://apt.cleverdb.io:80"
 app_name=cleverdb-agent
 app_path=/opt/sendgridlabs/cleverdb-agent
-app_config=$app_path/$app_name.conf
+app_config=/etc/$app_name/config
 app_url="http://cleverdb.io"
 repo_url="https://github.com/sendgridlabs/cleverdb-agent"
 install_log="$app_name-install.log"
@@ -130,6 +130,7 @@ if [ $OS = "RedHat" ]; then
     fi
 elif [ $OS = "Debian" -o $OS = "Ubuntu" ]; then
     printf "\033[34m\n* Installing APT package sources\n\033[0m\n"
+
     $sudo_cmd sh -c "echo 'deb $apt_repo staging main' > /etc/apt/sources.list.d/$app_name.list"
     $sudo_cmd wget -O - $apt_repo/key.asc | apt-key add -
     #$sudo_cmd apt-key adv --recv-keys --keyserver $apt_key_repo C7A7DA52
@@ -150,21 +151,29 @@ Please follow the instructions on $app_name setup page:
     exit;
 fi
 
-printf "\033[34m\n* Adding your API key to $app_name configuration: $config_file\n\033[0m\n"
+printf "\033[34m\n* Adding your API key to $app_name configuration: $app_config\n\033[0m\n"
 printf "\033[34m\n* $apikey $dbid\n\033[0m\n"
 
-#if $DDBASE; then
-    #$sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' /etc/cleverdb-agent/datadog.conf.example | sed 's/# dogstatsd_target :.*/dogstatsd_target: https:\/\/app.datadoghq.com/' > /etc/dd-agent/datadog.conf"
-#else
-    #$sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' /etc/cleverdb-agent/datadog.conf.example > /etc/dd-agent/datadog.conf"
-#fi
+# Write db_id and api_key to config file
+create_config_file() {
+	# create config dir:
+	printf "\033[34m\n* Creating config directory /etc/$app_name\n\033[0m\n"
+	$sudo_cmd mkdir -p /etc/$app_name
+
+	local file="$app_config"
+
+	if [ ! -f "$app_config" ] ; then
+	 touch "$app_config"
+	fi
+
+	printf "[agent]\napi_key=$apikey\ndb_id=$dbid" >> "$app_config"
+}
+create_config_file
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
 #$sudo_cmd /etc/init.d/cleverdb-agent restart
 $sudo_cmd cleverdb-agent &
 
-# Datadog "base" installs don't have a forwarder, so we can't use the same
-# check for the initial payload being sent.
 if $DDBASE; then
 printf "\033[32m
 Your Agent has started up for the first time and is submitting metrics to
@@ -186,22 +195,6 @@ fi
 # Wait for metrics to be submitted by the forwarder
 printf "\033[32m
 Your $app_name has started up for the first time.\n\033[0m"
-
-#c=0
-#while [ "$c" -lt "30" ]; do
-#    sleep 1
-#    echo -n "."
-#    c=$(($c+1))
-#done
-
-#$dl_cmd http://127.0.0.1:17123/status?threshold=0 > /dev/null 2>&1
-#success=$?
-#while [ "$success" -gt "0" ]; do
-#    sleep 1
-#    echo -n "."
-#    $dl_cmd http://127.0.0.1:17123/status?threshold=0 > /dev/null 2>&1
-#    success=$?
-#done
 
 # Metrics are submitted, echo some instructions and exit
 printf "\033[32m
