@@ -188,7 +188,7 @@ def run(db_id, api_key):
         ssh_options.append("-i")
         ssh_options.append(key.name)
         ssh_options.append("-p")
-        ssh_options.append(byte_string(config['container_port']))
+        ssh_options.append(byte_string(config['port']))
 
         # start the SSH tunnel
         logger.info("Starting SSH tunnel...")
