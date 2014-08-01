@@ -382,7 +382,7 @@ def main():
         cp.read(options.config)
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
-        host = cp.get('agent', 'connection_host')
+        host = cp.get('agent', 'connect_host')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
             options.config,
