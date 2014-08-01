@@ -6,6 +6,11 @@ First part is required, and should be completed on developer machine,
 second one should be done on repository host, and in near future will be
 replaced by automatic tool.
 
+## Requirements
+
+Developer machine should be debian or ubuntu linux, and shoudl have installed
+following packages: ``devscripts`` and ``git-buildpackage``
+
 ## Adding changelog entry
 
 First, you should set your name and email:
@@ -25,9 +30,9 @@ Then commit updated ``debian/changelog``.
 (I suggest commit changelog separately from other changes, and use text
 ``Changelog updated`` as commit message.)
 
-Then tag commit as  ``debian/version-in-changelog``.
-(I suggest use ``git-buildpackage`` tool for tagging, but ordinary ``git tag``
-would work as well).
+Then tag commit:
+
+    git-buildpackage --git-tag
 
 ## Upload package
 
