@@ -144,7 +144,7 @@ class OptionParser(optparse.OptionParser):
         )
 
 
-def run(db_id, api_key):
+def run(host, db_id, api_key):
     """
     -f tells ssh to go into the background (daemonize).
     -N tells ssh that you don't want to run a remote command.
@@ -160,10 +160,11 @@ def run(db_id, api_key):
 
     while True:
         # get config from api:
-        config = _get_config(db_id, api_key)
+        config = _get_config(host, db_id, api_key)
+        ports = config['ports'][0]
         local_part = "%s:localhost:%s" % (
-            config['container_port'],
-            config['master_port'])
+            ports['master'],
+            ports['slave'])
 
         # save private key to disk
         temps = tempfile.mkdtemp()
@@ -222,12 +223,12 @@ def run(db_id, api_key):
         logger.info("Retrying opening SSH tunnel...%i" % retry_count)
 
 
-def _get_config(db_id, api_key):
+def _get_config(host, db_id, api_key):
     # TODO: remove basic auth
     auth = base64.encodestring(
         byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
-    url = 'http://cleverdb.com/api/agent/%s/configuration?api_key=%s' % (
-        db_id, api_key)
+    url = '%s/v1/agent/%s/configuration?api_key=%s' % (
+        host, db_id, api_key)
     req = urllib.Request(url)
     req.add_header("Authorization", "Basic %s" % auth)
 
@@ -236,6 +237,7 @@ def _get_config(db_id, api_key):
         try:
             handle = urllib.urlopen(req)
             res = json.loads(handle.read())
+            logger.debug(res)
             return res
         except Exception as e:
             retry_count += 1
@@ -380,6 +382,7 @@ def main():
         cp.read(options.config)
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
+        host = cp.get('agent', 'connect_host')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
             options.config,
@@ -391,7 +394,7 @@ def main():
         chugid(options.user)
     if options.daemon:
         daemonize()
-    run(db_id, api_key)
+    run(host, db_id, api_key)
 
 
 if __name__ == '__main__':
