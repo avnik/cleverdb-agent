@@ -12,6 +12,7 @@ import optparse
 import pwd
 import tempfile
 import shutil
+import hashlib
 
 # Python2 vs Python3 black magic
 py_version = sys.version_info[:3]
@@ -84,7 +85,7 @@ class OptionParser(optparse.OptionParser):
     ]
 
     def __init__(self):
-        optparse.OptionParser.__init__(self)
+        optparse.OptionParser.__init__(self, version=__version__)
         self.add_option(
             '-l', '--log-level',
             choices=list(self.LOG_LEVELS),
@@ -102,22 +103,20 @@ class OptionParser(optparse.OptionParser):
             default='/etc/cleverdb-agent/config'
         )
         self.add_option(
-            '--version',
-            help='version of the agent',
-            dest='version',
+            '--rsync',
             action='store_true',
-            default=False
+            default=False,
+            dest='rsync'
         )
 
-
-def run(db_id, api_key, filename):
+def run(uploader, host, db_id, api_key, filename):
     retry_count = 0
 
     global prog, temps
 
     while True:
         # get config from api:
-        config = _get_config(db_id, api_key)
+        config = _get_config(host, db_id, api_key)
 
         # save private key to disk
         temps = tempfile.mkdtemp()
@@ -127,9 +126,17 @@ def run(db_id, api_key, filename):
         key.close()
 
         try:
-            rsync_cp(config, key.name, filename, "/upload/{}.sql".format(db_id))
+            uploader(config, key.name, filename,
+                     "/uploads/{}.sql".format(db_id))
+            checksum_file = tempfile.NamedTemporaryFile(dir=temps, delete=False)
+            checksum_file.write("sha1:{}\n".format(checksum(filename)))
+            checksum_file.close()
+            uploader(config, key.name, checksum_file.name,
+                     "/uploads/{}.checksum".format(db_id))
         except Exception as e:
             logger.debug(e)
+        else:
+            return
         finally:
             shutil.rmtree(temps)
             temps = None
@@ -141,66 +148,85 @@ def run(db_id, api_key, filename):
         sleep(retry_count)
         logger.info("Retrying upload file...%i" % retry_count)
 
+
+def scp_cp(config, keyfile, src, dst):
+    scp_commandline = [
+        "scp",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "StrictHostKeyChecking=no",
+        "-i", keyfile,
+        "-P", byte_string(config['port']),
+        src,
+        byte_string("{}@{}:{}".format(config['user'], config['ip'], dst))
+    ]
+    logger.debug(scp_commandline)
+    check_call(scp_commandline)
+
 def rsync_cp(config, keyfile, src, dst):
-        ssh_options = ["ssh"]
+    # TODO: generate 2 key pair so we don't have to ignore host checking
+    ssh_commandline = [
+        "ssh",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "StrictHostKeyChecking=no",
+        "-i", keyfile,
+        "-p", byte_string(config['port'])
+    ]
 
-        # TODO: generate 2 key pair so we don't have to ignore host checking
-        ssh_options.append("-o")
-        ssh_options.append("UserKnownHostsFile=/dev/null")
-        ssh_options.append("-o")
-        ssh_options.append("StrictHostKeyChecking=no")
+    rsync_commandline = [
+        "rsync",
+        "-e", " ".join(ssh_commandline),
+        src,
+        byte_string("%s@%s:%s" % (config['user'], config['ip'], dst)),
+    ]
+    logger.info("Starting RSYNC...")
+    logger.debug("RSYNC option is ")
+    logger.debug(rsync_commandline)
+    check_call(rsync_commandline)
 
-        ssh_options.append("-i")
-        ssh_options.append(keyfile)
-        ssh_options.append("-p")
-        ssh_options.append(byte_string(config['port']))
-
-
-        rsync_options = ["rsync"]
-        rsync_options.append("-e")
-        rsync_options.append(" ".join(ssh_options))
-
-        rsync_options.append(src)
-        rsync_options.append(
-                byte_string("%s@%s:%s" % (config['user'], config['ip'], dst)))
-
-
-        logger.info("Starting RSYNC...")
-        logger.debug("RSYNC option is ")
-        logger.debug(rsync_options)
-
-        try:
-            prog = subprocess.Popen(rsync_options)
-            prog.communicate()
-        finally:
-            if prog.returncode == 0:
-                logger.info("All OK")
-                prog = None
-                return
-            prog = None
+def check_call(*args, **kwargs):
+    """Modified version of subprocess.check_call """
+    try:
+        prog = subprocess.Popen(*args, **kwargs)
+        prog.communicate()
+    finally:
+        if prog.returncode == 0:
+            logger.info("All OK")
+        else:
             logger.error(
-                "RSYNC terminated with non-zero error code: {}".format(
+                "command terminated with non-zero error code: {}".format(
                     prog.returncode
                 )
             )
-            logger.error("RSYNC: {}".format(prog.stderr))
+            cmd = kwargs.get("args") or args[0]
+            raise subprocess.CalledProcessError(prog.returncode, cmd)
+        prog = None
 
+def checksum(filename):
+    sha1 = hashlib.sha1()
+    with open(filename, 'r') as f:
+        while True:
+            data = f.read(65535)
+            if len(data) == 0:
+                break
+            sha1.update(data)
+        return sha1.hexdigest()
 
-
-def _get_config(db_id, api_key):
+def _get_config(host, db_id, api_key):
     # TODO: remove basic auth
     auth = base64.encodestring(
         byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
-    url = 'http://connect.cleverdb.io/v1/agent/%s/configuration?api_key=%s' % (
-        db_id, api_key)
+    url = '%s/v1/agent/%s/configuration?api_key=%s' % (
+        host, db_id, api_key)
     req = urllib.Request(url)
     req.add_header("Authorization", "Basic %s" % auth)
+    logger.debug(url)
 
     retry_count = 0
     while True:
         try:
             handle = urllib.urlopen(req)
             res = json.loads(handle.read())
+            logger.debug(res)
             return res
         except Exception as e:
             retry_count += 1
@@ -222,10 +248,6 @@ def main():
         sys.stderr.write("Missing filename\n")
         sys.exit(1)
 
-    # check for --version
-    if options.version:
-        exit(__version__)
-
     setup_logging(
         option_parser.LOG_LEVELS[options.log_level],
     )
@@ -242,6 +264,7 @@ def main():
         cp.read(options.config)
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
+        host = cp.get('agent', 'connection_host')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
             options.config,
@@ -249,7 +272,8 @@ def main():
         ))
         sys.exit(1)
 
-    run(db_id, api_key, args[0])
+    uploader = options.rsync and rsync_cp or scp_cp
+    run(uploader, host, db_id, api_key, args[0])
 
 
 if __name__ == '__main__':
