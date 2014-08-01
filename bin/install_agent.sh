@@ -100,11 +100,15 @@ if [ -n "$CD_DB_ID" ]; then
     dbid=$CD_DB_ID
 fi
 
+if [ -n "$CD_CONNECT_HOST" ]; then
+    connect_host=$CD_CONNECT_HOST
+fi
+
 if [ ! $apikey ]; then
     printf "\033[31m
 CD_API_KEY environment variable does not exist.
 
-Example usage: CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
+Example usage: CD_CONNECT_HOST=https://cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
     exit 1;
 fi
 
@@ -112,7 +116,15 @@ if [ ! $dbid ]; then
     printf "\033[31m
 CD_DB_ID environment variable does not exist.
 
-Example usage: CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
+Example usage: CD_CONNECT_HOST=https://cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
+    exit 1;
+fi
+
+if [ ! $connect_host ]; then
+    printf "\033[31m
+CD_CONNECT_HOST environment variable does not exist.
+
+Example usage: CD_CONNECT_HOST=https://cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
     exit 1;
 fi
 
@@ -166,7 +178,7 @@ create_config_file() {
 	 touch "$app_config"
 	fi
 
-	printf "[agent]\napi_key=$apikey\ndb_id=$dbid" >> "$app_config"
+	printf "[agent]\napi_key=$apikey\ndb_id=$dbid\nconnect_host=$connect_host" > "$app_config"
 }
 create_config_file
 
