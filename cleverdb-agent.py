@@ -163,8 +163,8 @@ def run(host, db_id, api_key):
         config = _get_config(host, db_id, api_key)
         ports = config['ports'][0]
         local_part = "%s:localhost:%s" % (
-            ports['master'],
-            ports['slave'])
+            ports['slave'],
+            ports['master'])
 
         # save private key to disk
         temps = tempfile.mkdtemp()
