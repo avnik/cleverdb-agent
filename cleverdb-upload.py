@@ -131,8 +131,8 @@ def run(uploader, host, db_id, api_key, filename):
             checksum_file = tempfile.NamedTemporaryFile(dir=temps, delete=False)
             checksum_file.write("sha1:{}\n".format(checksum(filename)))
             checksum_file.close()
-            uploader(config, key.name, checksum_file.name,
-                     "/uploads/{}.checksum".format(db_id))
+            # uploader(config, key.name, checksum_file.name,
+            #          "/uploads/{}.checksum".format(db_id))
         except Exception as e:
             logger.debug(e)
         else:

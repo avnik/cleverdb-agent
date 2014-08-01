@@ -1,8 +1,9 @@
-cleverdb-agent (0.2.3) UNRELEASED; urgency=medium
+cleverdb-agent (0.2.4) UNRELEASED; urgency=medium
 
   * Add uploader script: cleverdb upload
+  * 
 
- -- Alexander V. Nikolaev <avn@daemon.hole.ru>  Sat, 02 Aug 2014 00:06:00 +0300
+ -- Alexander V. Nikolaev <vagrant@vagrant-ubuntu-trusty-64>  Fri, 01 Aug 2014 21:47:32 +0000
 
 cleverdb-agent (0.2.2) UNRELEASED; urgency=medium
 
