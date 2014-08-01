@@ -8,3 +8,4 @@ override_dh_auto_configure override_dh_auto_build override_dh_auto_install overr
 override_dh_install:
 	dh_install
 	install -m755 cleverdb-agent.py debian/cleverdb-agent/usr/bin/cleverdb-agent
+	install -m755 cleverdb-upload.py debian/cleverdb-agent/usr/bin/cleverdb-upload
