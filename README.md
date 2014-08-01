@@ -21,4 +21,4 @@ This agent support the following:
 	
 ## One Step Installation ##
 
-	CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id bash -c "$(curl -L https://raw.githubusercontent.com/sendgridlabs/cleverdb-agent/master/bin/install_agent.sh)"
+	CD_CONNECT_HOST=https://connect.cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id bash -c "$(curl -L https://raw.githubusercontent.com/sendgridlabs/cleverdb-agent/master/bin/install_agent.sh)"

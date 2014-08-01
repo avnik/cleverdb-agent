@@ -1,6 +1,5 @@
 #!/bin/bash
 # CleverDb agent install script.
-# copied from: https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh
 set -e
 gist_request=/tmp/agent-gist-request.tmp
 gist_response=/tmp/agent-gist-response.tmp
@@ -45,21 +44,22 @@ has_python=$(which python || echo "no")
 if [ $has_python = "no" ]; then
     printf "\033[31mPython is required to install $app_name.\033[0m\n"
     exit 1;
-fi
-
-# Python version detection
-PY_VERSION=$(python -c 'import sys; print "%d.%d" % (sys.version_info[0], sys.version_info[1])')
-if [ $PY_VERSION = "2.4" -o $PY_VERSION = "2.5" ]; then
-    DDBASE=true
 else
-    DDBASE=false
+	# Make sure Python is at least 2.6
+	PY_VERSION=$(python -c 'import sys; print "%d.%d" % (sys.version_info[0], sys.version_info[1])')
+
+	if [[ "$PY_VERSION" < "2.6" ]]; then
+		echo $PY_VERSION
+		printf "\033[31mPython 2.6 or higher is required to install $app_name.\033[0m\n"
+    	exit 1;
+	fi
 fi
 
 # Root user detection
-if [ $(echo "$UID") = "0" ]; then
+if [ $(echo "$UID") == "0" ]; then
     sudo_cmd=''
 else
-    sudo_cmd='sudo'
+    sudo_cmd="sudo "
 fi
 
 if [ $(which curl) ]; then
@@ -92,40 +92,30 @@ solve your problem.\n\033[0m\n"
 }
 trap on_error ERR
 
+print_missing_key_error() {
+	printf "\033[31m
+	Required environment variable does not exist. Example usage:
+
+	CD_CONNECT_HOST=https://connect.cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
+    exit 1;
+}
+
 if [ -n "$CD_API_KEY" ]; then
     apikey=$CD_API_KEY
+else
+	print_missing_key_error
 fi
 
 if [ -n "$CD_DB_ID" ]; then
     dbid=$CD_DB_ID
+else
+	print_missing_key_error
 fi
 
 if [ -n "$CD_CONNECT_HOST" ]; then
     connect_host=$CD_CONNECT_HOST
-fi
-
-if [ ! $apikey ]; then
-    printf "\033[31m
-CD_API_KEY environment variable does not exist.
-
-Example usage: CD_CONNECT_HOST=https://cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
-    exit 1;
-fi
-
-if [ ! $dbid ]; then
-    printf "\033[31m
-CD_DB_ID environment variable does not exist.
-
-Example usage: CD_CONNECT_HOST=https://cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
-    exit 1;
-fi
-
-if [ ! $connect_host ]; then
-    printf "\033[31m
-CD_CONNECT_HOST environment variable does not exist.
-
-Example usage: CD_CONNECT_HOST=https://cleverdb.io CD_API_KEY=sample_api_key CD_DB_ID=sample_db_id ${BASH_SOURCE[0]}\n\033[0m\n"
-    exit 1;
+else
+   print_missing_key_error
 fi
 
 # Install the necessary package sources
@@ -135,25 +125,17 @@ if [ $OS = "RedHat" ]; then
 
     printf "\033[34m* Installing the $app_name package\n\033[0m\n"
 
-    if $DDBASE; then
-        $sudo_cmd yum -y install cleverdb-agent-base
-    else
-        $sudo_cmd yum -y install cleverdb-agent
-    fi
+	$sudo_cmd yum -y install $app_name
+
 elif [ $OS = "Debian" -o $OS = "Ubuntu" ]; then
     printf "\033[34m\n* Installing APT package sources\n\033[0m\n"
 
     $sudo_cmd sh -c "echo 'deb $apt_repo staging main' > /etc/apt/sources.list.d/$app_name.list"
-    $sudo_cmd wget -O - $apt_repo/key.asc | apt-key add -
-    #$sudo_cmd apt-key adv --recv-keys --keyserver $apt_key_repo C7A7DA52
+    $sudo_cmd wget -O - $apt_repo/key.asc | $sudo_cmd apt-key add -
 
     printf "\033[34m\n* Installing the $app_name package\n\033[0m\n"
     $sudo_cmd apt-get update
-    if $DDBASE; then
-        $sudo_cmd apt-get install -y --force-yes $app_name-base
-    else
-        $sudo_cmd apt-get install -y --force-yes $app_name
-    fi
+	$sudo_cmd apt-get install -y --force-yes $app_name
 else
     printf "\033[31m
 Your OS or distribution is not supported by this install script.
@@ -164,7 +146,6 @@ Please follow the instructions on $app_name setup page:
 fi
 
 printf "\033[34m\n* Adding your API key to $app_name configuration: $app_config\n\033[0m\n"
-printf "\033[34m\n* $apikey $dbid\n\033[0m\n"
 
 # Write db_id and api_key to config file
 create_config_file() {
@@ -175,34 +156,15 @@ create_config_file() {
 	local file="$app_config"
 
 	if [ ! -f "$app_config" ] ; then
-	 touch "$app_config"
+		$sudo_cmd touch "$app_config"
 	fi
 
-	printf "[agent]\napi_key=$apikey\ndb_id=$dbid\nconnect_host=$connect_host" > "$app_config"
+	$sudo_cmd sh -c "echo '[agent]\napi_key=$apikey\ndb_id=$dbid\nconnect_host=$connect_host' > $app_config"
 }
 create_config_file
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-#$sudo_cmd /etc/init.d/cleverdb-agent restart
 $sudo_cmd cleverdb-agent &
-
-if $DDBASE; then
-printf "\033[32m
-Your Agent has started up for the first time and is submitting metrics to
-Datadog. You should see your Agent show up in Datadog shortly at:
-
-    https://app.datadoghq.com/infrastructure\033[0m
-
-If you ever want to stop the Agent, run:
-
-    sudo /etc/init.d/cleverdb-agent stop
-
-And to run it again run:
-
-    sudo /etc/init.d/cleverdb-agent start
-"
-exit;
-fi
 
 # Wait for metrics to be submitted by the forwarder
 printf "\033[32m
