@@ -19,3 +19,5 @@ debuild clean
 debuild binary
 
 # TODO: move to build directory
+mkdir build/
+mv ../cleverdb-agent*.deb build/.
