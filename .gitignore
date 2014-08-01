@@ -6,6 +6,7 @@ evn/
 env/
 .env
 build/
+*.pyc
 
 # Generated files from dpkg-dev
 debian/cleverdb-agent

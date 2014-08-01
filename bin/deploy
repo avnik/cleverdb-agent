@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# deploy using Fabric
+scp -i ../cleverdb-deploy/keys/cleverdb-web.pem build/cleverdb-agent*.deb ubuntu@apt.cleverdb.io:/tmp/latest.deb
+fab -H ubuntu@apt.cleverdb.io -i ../cleverdb-deploy/keys/cleverdb-web.pem deploy
