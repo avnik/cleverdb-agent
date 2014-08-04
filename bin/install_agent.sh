@@ -15,7 +15,7 @@ install_log="$app_name-install.log"
 
 # SSH detection
 has_ssh=$(which ssh || echo "no")
-if [ $has_ssh = "no" ]; then
+if [ $has_ssh == "no" ]; then
     printf "\033[31mSSH is required to install $app_name.\033[0m\n"
     exit 1;
 fi
@@ -34,14 +34,14 @@ else
     OS=$(uname -s)
 fi
 
-if [ $OS = "Darwin" ]; then
+if [ $OS == "Darwin" ]; then
     printf "\033[31mMac OS is currently not supported.\033[0m\n"
     exit 1;
 fi
 
 # Python detection
 has_python=$(which python || echo "no")
-if [ $has_python = "no" ]; then
+if [ $has_python == "no" ]; then
     printf "\033[31mPython is required to install $app_name.\033[0m\n"
     exit 1;
 else
@@ -119,7 +119,7 @@ else
 fi
 
 # Install the necessary package sources
-if [ $OS = "RedHat" ]; then
+if [ $OS == "RedHat" ]; then
     echo -e "\033[34m\n* Installing YUM sources\n\033[0m"
     $sudo_cmd sh -c "echo -e '[sendgrid]\nname = SendGrid.\nbaseurl = $yum_repo/rpm/\nenabled=1\ngpgcheck=0\npriority=1' > /etc/yum.repos.d/$app_name.repo"
 
@@ -127,7 +127,7 @@ if [ $OS = "RedHat" ]; then
 
 	$sudo_cmd yum -y install $app_name
 
-elif [ $OS = "Debian" -o $OS = "Ubuntu" ]; then
+elif [ $OS == "Debian" -o $OS == "Ubuntu" ]; then
     printf "\033[34m\n* Installing APT package sources\n\033[0m\n"
 
     $sudo_cmd sh -c "echo 'deb $apt_repo staging main' > /etc/apt/sources.list.d/$app_name.list"
@@ -164,11 +164,41 @@ create_config_file() {
 create_config_file
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$sudo_cmd service cleverdb-agent start
+$sudo_cmd /etc/init.d/cleverdb-agent start
 
-# Wait for metrics to be submitted by the forwarder
-printf "\033[32m
-Your $app_name has started up for the first time.\n\033[0m"
+mysql_dump(){
+	echo "What is your MySQL database name?"
+	read db_name
+
+	echo "What is your MySQL database username? [root]"
+	read db_username
+
+	if [ "$db_username" == "" ]; then
+		db_username="root"
+	fi
+
+	echo "What is your MySQL database password?"
+	read -s db_password
+
+	printf "\033[34m* Dumping your database to file...\n\033[0m\n"
+	mysqldump -u $db_username --password=$db_password --opt --master-data $db_name > $db_name.sql
+	printf "\033[34m* MySQL database dump completed.\n\033[0m\n"
+}
+
+upload_dump(){
+	printf "\033[34m* Uploading your database dump...\n\033[0m\n"
+	$sudo_cmd cleverdb-upload $db_name.sql
+	printf "\033[34m* Upload finished.\n\033[0m\n"
+}
+
+echo "Do you want to do a MySQL dump of your database now? (Note: it will lock your tables)"
+echo "Please select 1 or 2"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) mysql_dump; upload_dump; break;;
+        No ) exit;;
+    esac
+done
 
 # Metrics are submitted, echo some instructions and exit
 printf "\033[32m
@@ -184,26 +214,3 @@ And to run it again run:
     sudo /etc/init.d/$app_name start
 
 \033[0m"
-
-mysql_dump(){
-	echo "What is your MySQL database name?"
-	read db_name
-
-	echo "What is your MySQL database username?"
-	read db_username
-
-	echo "What is your MySQL database password?"
-	read db_password
-
-	#echo "read in is...."
-	#echo $db_name $db_username $db_password
-}
-
-echo "Do you want to do a MySQL database dump now? (Note: it will lock your table)"
-echo "Please select 1 or 2"
-select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) mysql_dump; break;;
-        No ) exit;;
-    esac
-done
