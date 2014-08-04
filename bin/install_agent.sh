@@ -164,7 +164,7 @@ create_config_file() {
 create_config_file
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$sudo_cmd cleverdb-agent &
+$sudo_cmd service cleverdb-agent start
 
 # Wait for metrics to be submitted by the forwarder
 printf "\033[32m
@@ -184,3 +184,26 @@ And to run it again run:
     sudo /etc/init.d/$app_name start
 
 \033[0m"
+
+mysql_dump(){
+	echo "What is your MySQL database name?"
+	read db_name
+
+	echo "What is your MySQL database username?"
+	read db_username
+
+	echo "What is your MySQL database password?"
+	read db_password
+
+	#echo "read in is...."
+	#echo $db_name $db_username $db_password
+}
+
+echo "Do you want to do a MySQL database dump now? (Note: it will lock your table)"
+echo "Please select 1 or 2"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) mysql_dump; break;;
+        No ) exit;;
+    esac
+done
