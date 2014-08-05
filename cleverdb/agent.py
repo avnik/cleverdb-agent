@@ -126,7 +126,7 @@ class OptionParser(optparse.OptionParser):
         )
 
 
-def run(host, db_id, api_key):
+def run(host, db_id, api_key, master_host, master_port):
     """
     -f tells ssh to go into the background (daemonize).
     -N tells ssh that you don't want to run a remote command.
@@ -144,9 +144,11 @@ def run(host, db_id, api_key):
         # get config from api:
         config = _get_config(host, db_id, api_key)
         ports = config['ports'][0]
-        local_part = "%s:localhost:%s" % (
+        local_part = "{}:{}:{}".format(
             ports['slave'],
-            ports['master'])
+            master_host,
+            master_port
+        )
 
         # save private key to disk
         temps = tempfile.mkdtemp()
@@ -389,6 +391,8 @@ def main():
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
         host = cp.get('agent', 'connect_host')
+        master_host = cp.get('agent', 'master_host')
+        master_port = cp.get('agent', 'master_port')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
             ", ".join(configs),
@@ -400,7 +404,7 @@ def main():
         chugid(options.user)
     if options.daemon:
         daemonize()
-    run(host, db_id, api_key)
+    run(host, db_id, api_key, master_host, master_port)
 
 
 if __name__ == '__main__':
