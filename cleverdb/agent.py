@@ -14,6 +14,7 @@ import tempfile
 import shutil
 from cleverdb import __version__
 from cleverdb.util import py23
+import glob
 
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
@@ -105,10 +106,16 @@ class OptionParser(optparse.OptionParser):
             dest="pid_file"
         )
         self.add_option(
-            '--config',
+            '--confdir',
             action='store',
-            dest='config',
-            default='/etc/cleverdb-agent/config'
+            dest="confdir",
+            default="/etc/cleverdb-agent"
+        )
+        self.add_option(
+            '--config',
+            action='append',
+            dest='configs',
+            default=[]
         )
         self.add_option(
             '--version',
@@ -363,22 +370,28 @@ def main():
         options.facility
     )
 
-    # check if config file exist and readble:
-    if (not os.path.isfile(options.config) or
-            not os.access(options.config, os.R_OK)):
-        logger.critical("Configuration file {0} does not exist or "
-                        "not readable".format(options.config))
-        sys.exit(1)
-
     try:
         cp = ConfigParser()
-        cp.read(options.config)
+        if os.path.isdir(options.confdir):
+            configs = glob.iglob(os.path.join(options.confdir, "*.conf"))
+            configs = list(sorted(configs))
+        else:
+            configs = []
+        configs.extend(options.configs)
+        
+        logger.debug(configs)
+        if not configs:
+            logger.critical("Configuration file {0} does not exist or "
+                            "not readable".format(options.config))
+            sys.exit(1)
+
+        cp.read(configs)
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
         host = cp.get('agent', 'connect_host')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
-            options.config,
+            ", ".join(configs),
             e.message
         ))
         sys.exit(1)

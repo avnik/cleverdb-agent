@@ -8,7 +8,7 @@ apt_repo="https://apt.cleverdb.io"
 apt_key_repo="hkp://apt.cleverdb.io:80"
 app_name=cleverdb-agent
 app_path=/opt/sendgridlabs/cleverdb-agent
-app_config=/etc/$app_name/config
+app_config=/etc/$app_name/connect.conf
 app_url="https://cleverdb.io"
 repo_url="https://github.com/sendgridlabs/cleverdb-agent"
 install_log="$app_name-install.log"
@@ -215,3 +215,4 @@ And to run it again run:
     sudo /etc/init.d/$app_name start
 
 \033[0m"
+
