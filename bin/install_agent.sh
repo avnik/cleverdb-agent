@@ -3,13 +3,13 @@
 set -e
 gist_request=/tmp/agent-gist-request.tmp
 gist_response=/tmp/agent-gist-response.tmp
-yum_repo="http://yum.cleverdb.io"
-apt_repo="http://apt.cleverdb.io"
+yum_repo="https://yum.cleverdb.io"
+apt_repo="https://apt.cleverdb.io"
 apt_key_repo="hkp://apt.cleverdb.io:80"
 app_name=cleverdb-agent
 app_path=/opt/sendgridlabs/cleverdb-agent
 app_config=/etc/$app_name/config
-app_url="http://cleverdb.io"
+app_url="https://cleverdb.io"
 repo_url="https://github.com/sendgridlabs/cleverdb-agent"
 install_log="$app_name-install.log"
 
@@ -163,8 +163,9 @@ create_config_file() {
 }
 create_config_file
 
-printf "\033[34m* Starting the Agent...\n\033[0m\n"
+printf "\033[34m* Starting the $app_name...\n\033[0m\n"
 $sudo_cmd /etc/init.d/cleverdb-agent start
+printf "\033[34m* $app_name started.\n\033[0m\n"
 
 mysql_dump(){
 	echo "What is your MySQL database name?"
@@ -196,7 +197,7 @@ echo "Please select 1 or 2"
 select yn in "Yes" "No"; do
     case $yn in
         Yes ) mysql_dump; upload_dump; break;;
-        No ) exit;;
+        No ) printf "\033[34m* Skipping MySQL dump...\n\033[0m\n"; break;;
     esac
 done
 
