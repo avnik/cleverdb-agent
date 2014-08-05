@@ -12,42 +12,17 @@ import optparse
 import pwd
 import tempfile
 import shutil
+from cleverdb import __version__
+from cleverdb.util import py23
 
-# Python2 vs Python3 black magic
-py_version = sys.version_info[:3]
-# Python 2
-if py_version < (3, 0, 0):
-    import urllib2 as urllib
-    from ConfigParser import ConfigParser
-    from ConfigParser import Error as ConfigParserError
-
-    chr = unichr
-    native_string = str
-    decode_string = unicode
-    encode_string = str
-    unicode_string = unicode
-    string_type = basestring
-    byte_string = str
-else:
-    import urllib.request as urllib
-    from configparser import ConfigParser
-    from configparser import Error as ConfigParserError
-    import builtins
-
-    byte_string = bytes
-    string_type = str
-    native_string = str
-    decode_string = bytes.decode
-    encode_string = lambda s: bytes(s, 'utf-8')
-    unicode_string = str
-# end of magic block
-
-__version__ = '0.2.2'
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
 prog = None
 temps = None
+
+# support Python 3
+py23()
 
 
 def signal_handler(signo, frame):

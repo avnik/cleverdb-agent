@@ -109,6 +109,7 @@ class OptionParser(optparse.OptionParser):
             dest='rsync'
         )
 
+
 def run(uploader, host, db_id, api_key, filename):
     retry_count = 0
 
@@ -132,7 +133,7 @@ def run(uploader, host, db_id, api_key, filename):
             checksum_file.write("sha1:{}\n".format(checksum(filename)))
             checksum_file.close()
             # uploader(config, key.name, checksum_file.name,
-            #          "/uploads/{}.checksum".format(db_id))
+            # "/uploads/{}.checksum".format(db_id))
         except Exception as e:
             logger.debug(e)
         else:
@@ -162,6 +163,7 @@ def scp_cp(config, keyfile, src, dst):
     logger.debug(scp_commandline)
     check_call(scp_commandline)
 
+
 def rsync_cp(config, keyfile, src, dst):
     # TODO: generate 2 key pair so we don't have to ignore host checking
     ssh_commandline = [
@@ -183,6 +185,7 @@ def rsync_cp(config, keyfile, src, dst):
     logger.debug(rsync_commandline)
     check_call(rsync_commandline)
 
+
 def check_call(*args, **kwargs):
     """Modified version of subprocess.check_call """
     try:
@@ -201,6 +204,7 @@ def check_call(*args, **kwargs):
             raise subprocess.CalledProcessError(prog.returncode, cmd)
         prog = None
 
+
 def checksum(filename):
     sha1 = hashlib.sha1()
     with open(filename, 'r') as f:
@@ -210,6 +214,7 @@ def checksum(filename):
                 break
             sha1.update(data)
         return sha1.hexdigest()
+
 
 def _get_config(host, db_id, api_key):
     # TODO: remove basic auth
