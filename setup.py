@@ -4,7 +4,7 @@ The cleverdb-agent will open a secure tunnel to cleverdb service
 """
 
 from setuptools import setup, find_packages
-from cleverdb import __version__
+from cleverdb.version import __version__
 
 
 ## Requirements only for development builds using pip,

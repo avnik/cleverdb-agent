@@ -13,7 +13,7 @@ import pwd
 import tempfile
 import shutil
 import glob
-from cleverdb import __version__
+from cleverdb.version import __version__
 from cleverdb.compat import *
 
 logging.QUIET = 1000

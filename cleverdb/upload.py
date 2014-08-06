@@ -14,6 +14,8 @@ import tempfile
 import shutil
 import hashlib
 import glob
+from cleverdb.compat import *
+from cleverdb.version import __version__
 
 # Python2 vs Python3 black magic
 py_version = sys.version_info[:3]
@@ -44,7 +46,6 @@ else:
     unicode_string = str
 # end of magic block
 
-__version__ = '0.2.2'
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
