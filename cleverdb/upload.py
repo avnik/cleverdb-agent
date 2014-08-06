@@ -5,8 +5,6 @@ import os
 import sys
 import logging
 import logging.handlers
-import base64
-import json
 import signal
 import optparse
 import pwd
@@ -16,35 +14,8 @@ import hashlib
 import glob
 from cleverdb.compat import *
 from cleverdb.version import __version__
+from cleverdb.api import get_tunnel_config
 
-# Python2 vs Python3 black magic
-py_version = sys.version_info[:3]
-# Python 2
-if py_version < (3, 0, 0):
-    import urllib2 as urllib
-    from ConfigParser import ConfigParser
-    from ConfigParser import Error as ConfigParserError
-
-    chr = unichr
-    native_string = str
-    decode_string = unicode
-    encode_string = str
-    unicode_string = unicode
-    string_type = basestring
-    byte_string = str
-else:
-    import urllib.request as urllib
-    from configparser import ConfigParser
-    from configparser import Error as ConfigParserError
-    import builtins
-
-    byte_string = bytes
-    string_type = str
-    native_string = str
-    decode_string = bytes.decode
-    encode_string = lambda s: bytes(s, 'utf-8')
-    unicode_string = str
-# end of magic block
 
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
@@ -125,7 +96,7 @@ def run(uploader, host, db_id, api_key, filename):
 
     while True:
         # get config from api:
-        config = _get_config(host, db_id, api_key)
+        config = get_tunnel_config(host, db_id, api_key)
 
         # save private key to disk
         temps = tempfile.mkdtemp()
@@ -222,31 +193,6 @@ def checksum(filename):
                 break
             sha1.update(data)
         return sha1.hexdigest()
-
-
-def _get_config(host, db_id, api_key):
-    # TODO: remove basic auth
-    auth = base64.encodestring(
-        byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
-    url = '%s/v1/agent/%s/configuration?api_key=%s' % (
-        host, db_id, api_key)
-    req = urllib.Request(url)
-    req.add_header("Authorization", "Basic %s" % auth)
-    logger.debug(url)
-
-    retry_count = 0
-    while True:
-        try:
-            handle = urllib.urlopen(req)
-            res = json.loads(handle.read())
-            logger.debug(res)
-            return res
-        except Exception as e:
-            retry_count += 1
-            logger.info("Retrying to connect to api...")
-            logger.info("Sleeping...%i seconds" % retry_count)
-            sleep(retry_count)
-            logger.error(e)
 
 
 def setup_logging(log_level):
