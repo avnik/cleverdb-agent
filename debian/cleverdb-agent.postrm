@@ -5,3 +5,5 @@ case "$1" in
         rmdir --ignore-fail-on-non-empty /etc/cleverdb-agent
     ;;
 esac
+
+#DEBHELPER#
