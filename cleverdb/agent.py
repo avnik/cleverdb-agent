@@ -12,18 +12,15 @@ import optparse
 import pwd
 import tempfile
 import shutil
-from cleverdb import __version__
-from cleverdb.util import py23
 import glob
+from cleverdb import __version__
+from cleverdb.compat import *
 
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
 prog = None
 temps = None
-
-# support Python 3
-py23()
 
 
 def signal_handler(signo, frame):
