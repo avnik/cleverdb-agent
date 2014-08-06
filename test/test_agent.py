@@ -1,5 +1,5 @@
 import unittest
-from cleverdb.cleverdb_agent import OptionParser
+from cleverdb.agent import OptionParser
 
 
 class CommandLineTestCase(unittest.TestCase):
