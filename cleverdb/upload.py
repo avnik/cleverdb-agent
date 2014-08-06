@@ -13,6 +13,9 @@ import pwd
 import tempfile
 import shutil
 import hashlib
+import glob
+from cleverdb.compat import *
+from cleverdb.version import __version__
 
 # Python2 vs Python3 black magic
 py_version = sys.version_info[:3]
@@ -43,7 +46,6 @@ else:
     unicode_string = str
 # end of magic block
 
-__version__ = '0.2.2'
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
@@ -97,10 +99,16 @@ class OptionParser(optparse.OptionParser):
                 'info')
         )
         self.add_option(
-            '--config',
+            '--confdir',
             action='store',
-            dest='config',
-            default='/etc/cleverdb-agent/config'
+            dest="confdir",
+            default="/etc/cleverdb-agent"
+        )
+        self.add_option(
+            '--config',
+            action='append',
+            dest='configs',
+            default=[]
         )
         self.add_option(
             '--rsync',
@@ -257,16 +265,22 @@ def main():
         option_parser.LOG_LEVELS[options.log_level],
     )
 
-    # check if config file exist and readble:
-    if (not os.path.isfile(options.config) or
-            not os.access(options.config, os.R_OK)):
-        logger.critical("Configuration file {0} does not exist or "
-                        "not readable".format(options.config))
-        sys.exit(1)
-
     try:
         cp = ConfigParser()
-        cp.read(options.config)
+        if os.path.isdir(options.confdir):
+            configs = glob.iglob(os.path.join(options.confdir, "*.conf"))
+            configs = list(sorted(configs))
+        else:
+            configs = []
+        configs.extend(options.configs)
+
+        logger.debug(configs)
+        if not configs:
+            logger.critical("Configuration file {0} does not exist or "
+                            "not readable".format(options.config))
+            sys.exit(1)
+
+        cp.read(configs)
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
         host = cp.get('agent', 'connect_host')

@@ -12,17 +12,15 @@ import optparse
 import pwd
 import tempfile
 import shutil
-from cleverdb import __version__
-from cleverdb.util import py23
+import glob
+from cleverdb.version import __version__
+from cleverdb.compat import *
 
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
 prog = None
 temps = None
-
-# support Python 3
-py23()
 
 
 def signal_handler(signo, frame):
@@ -105,10 +103,16 @@ class OptionParser(optparse.OptionParser):
             dest="pid_file"
         )
         self.add_option(
-            '--config',
+            '--confdir',
             action='store',
-            dest='config',
-            default='/etc/cleverdb-agent/config'
+            dest="confdir",
+            default="/etc/cleverdb-agent"
+        )
+        self.add_option(
+            '--config',
+            action='append',
+            dest='configs',
+            default=[]
         )
         self.add_option(
             '--version',
@@ -119,7 +123,7 @@ class OptionParser(optparse.OptionParser):
         )
 
 
-def run(host, db_id, api_key):
+def run(host, db_id, api_key, master_host, master_port):
     """
     -f tells ssh to go into the background (daemonize).
     -N tells ssh that you don't want to run a remote command.
@@ -137,9 +141,11 @@ def run(host, db_id, api_key):
         # get config from api:
         config = _get_config(host, db_id, api_key)
         ports = config['ports'][0]
-        local_part = "%s:localhost:%s" % (
+        local_part = "{}:{}:{}".format(
             ports['slave'],
-            ports['master'])
+            master_host,
+            master_port
+        )
 
         # save private key to disk
         temps = tempfile.mkdtemp()
@@ -363,22 +369,30 @@ def main():
         options.facility
     )
 
-    # check if config file exist and readble:
-    if (not os.path.isfile(options.config) or
-            not os.access(options.config, os.R_OK)):
-        logger.critical("Configuration file {0} does not exist or "
-                        "not readable".format(options.config))
-        sys.exit(1)
-
     try:
         cp = ConfigParser()
-        cp.read(options.config)
+        if os.path.isdir(options.confdir):
+            configs = glob.iglob(os.path.join(options.confdir, "*.conf"))
+            configs = list(sorted(configs))
+        else:
+            configs = []
+        configs.extend(options.configs)
+        
+        logger.debug(configs)
+        if not configs:
+            logger.critical("Configuration file {0} does not exist or "
+                            "not readable".format(options.config))
+            sys.exit(1)
+
+        cp.read(configs)
         db_id = cp.get('agent', 'db_id')
         api_key = cp.get('agent', 'api_key')
         host = cp.get('agent', 'connect_host')
+        master_host = cp.get('agent', 'master_host')
+        master_port = cp.get('agent', 'master_port')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
-            options.config,
+            ", ".join(configs),
             e.message
         ))
         sys.exit(1)
@@ -387,7 +401,7 @@ def main():
         chugid(options.user)
     if options.daemon:
         daemonize()
-    run(host, db_id, api_key)
+    run(host, db_id, api_key, master_host, master_port)
 
 
 if __name__ == '__main__':
