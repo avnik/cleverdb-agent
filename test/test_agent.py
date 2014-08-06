@@ -14,5 +14,3 @@ class AgentTest(CommandLineTestCase):
 
     def test_version(self):
         (a, b) = self.parser.parse_args(['--version'])
-        print a
-        print b
