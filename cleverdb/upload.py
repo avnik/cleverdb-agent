@@ -172,7 +172,7 @@ def check_call(*args, **kwargs):
         prog.communicate()
     finally:
         if prog.returncode == 0:
-            logger.info("All OK")
+            logger.info("Database dump uploaded successfully.")
         else:
             logger.error(
                 "command terminated with non-zero error code: {}".format(
