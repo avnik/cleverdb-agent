@@ -169,5 +169,7 @@ printf "\033[34m* $app_name started.\n\033[0m\n"
 
 
 printf "\033[32m
-$app_name is running and functioning properly. Please refer to the website $app_url for additional instructions.
+$app_name is running and functioning properly.
+
+Please refer to the website $app_url for additional instructions.
 \033[0m"
