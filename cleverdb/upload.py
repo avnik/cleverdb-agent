@@ -106,13 +106,16 @@ def run(uploader, host, db_id, api_key, filename):
         key.close()
 
         try:
-            uploader(config, key.name, filename,
-                     "/uploads/{}.sql".format(db_id))
+            dump_file = '{}.sql'.format(db_id)
             checksum_file = tempfile.NamedTemporaryFile(dir=temps, delete=False)
-            checksum_file.write("sha1:{}\n".format(checksum(filename)))
+            checksum_file.write("{} {}\n".format(checksum(filename), dump_file))
             checksum_file.close()
-            # uploader(config, key.name, checksum_file.name,
-            # "/uploads/{}.checksum".format(db_id))
+            uploader(config, key.name, checksum_file.name,
+                    "/uploads/{}.checksum".format(db_id))
+
+            uploader(config, key.name, filename,
+                     "/uploads/{}".format(dump_file))
+
         except Exception as e:
             logger.debug(e)
         else:
@@ -223,7 +226,7 @@ def main():
         logger.debug(configs)
         if not configs:
             logger.critical("Configuration file {0} does not exist or "
-                            "not readable".format(options.config))
+                            "not readable".format(options.configs))
             sys.exit(1)
 
         cp.read(configs)
@@ -232,7 +235,7 @@ def main():
         host = cp.get('agent', 'connect_host')
     except ConfigParserError as e:
         logger.critical("Error parsing configuration file {0}: {1}".format(
-            options.config,
+            options.configs,
             e.message
         ))
         sys.exit(1)
