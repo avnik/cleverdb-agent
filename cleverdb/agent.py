@@ -5,8 +5,6 @@ import os
 import sys
 import logging
 import logging.handlers
-import base64
-import json
 import signal
 import optparse
 import pwd
@@ -15,6 +13,7 @@ import shutil
 import glob
 from cleverdb.version import __version__
 from cleverdb.compat import *
+from cleverdb.api import get_tunnel_config
 
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
@@ -57,7 +56,7 @@ class OptionParser(optparse.OptionParser):
     ]
 
     def __init__(self):
-        optparse.OptionParser.__init__(self)
+        optparse.OptionParser.__init__(self, version=__version__)
         self.add_option(
             '-l', '--log-level',
             choices=list(self.LOG_LEVELS),
@@ -114,13 +113,6 @@ class OptionParser(optparse.OptionParser):
             dest='configs',
             default=[]
         )
-        self.add_option(
-            '--version',
-            help='version of the agent',
-            dest='version',
-            action='store_true',
-            default=False
-        )
 
 
 def run(host, db_id, api_key, master_host, master_port):
@@ -139,7 +131,7 @@ def run(host, db_id, api_key, master_host, master_port):
 
     while True:
         # get config from api:
-        config = _get_config(host, db_id, api_key)
+        config = get_tunnel_config(host, db_id, api_key)
         ports = config['ports'][0]
         local_part = "{}:{}:{}".format(
             ports['slave'],
@@ -154,23 +146,17 @@ def run(host, db_id, api_key, master_host, master_port):
         key.write(config['ssh_private_key'])
         key.close()
 
-        ssh_options = ["ssh"]
-
         # TODO: generate 2 key pair so we don't have to ignore host checking
-        ssh_options.append("-o")
-        ssh_options.append("UserKnownHostsFile=/dev/null")
-        ssh_options.append("-o")
-        ssh_options.append("StrictHostKeyChecking=no")
-
-        ssh_options.append("-N")
-        ssh_options.append("-R")
-        ssh_options.append(local_part)
-        ssh_options.append(
-            byte_string("%s@%s" % (config['user'], config['ip'])))
-        ssh_options.append("-i")
-        ssh_options.append(key.name)
-        ssh_options.append("-p")
-        ssh_options.append(byte_string(config['port']))
+        ssh_options = [
+            "ssh",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "StrictHostKeyChecking=no",
+            "-N",
+            "-R", local_part,
+            byte_string("%s@%s" % (config['user'], config['ip'])),
+            "-i", key.name,
+            "-p", byte_string(config['port'])
+        ]
 
         # start the SSH tunnel
         logger.info("Starting SSH tunnel...")
@@ -202,48 +188,6 @@ def run(host, db_id, api_key, master_host, master_port):
         logger.info("Sleeping...%i seconds" % retry_count)
         sleep(retry_count)
         logger.info("Retrying opening SSH tunnel...%i" % retry_count)
-
-
-def _get_config(host, db_id, api_key):
-    """
-    Get configuration settings from api manager
-
-    Sample return from api
-    {
-    "ports": [
-        {
-            "master": 3306,
-            "slave": 6789
-        }
-    ],
-    "ip": "54.227.103.172",
-    "port": "49153",
-    "user": "634391d4b5ed43038667ccd32c4d7c1b",
-    "ssh_private_key": "-----BEGIN DSA PRIVATE KEY--END DSA PRIVATE KEY-----",
-    "password": "xNudfraNTlVhRaVkoRcDWQcc"
-    }
-    """
-    # TODO: remove basic auth
-    auth = base64.encodestring(
-        byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
-    url = '%s/v1/agent/%s/configuration?api_key=%s' % (
-        host, db_id, api_key)
-    req = urllib.Request(url)
-    req.add_header("Authorization", "Basic %s" % auth)
-
-    retry_count = 0
-    while True:
-        try:
-            handle = urllib.urlopen(req)
-            res = json.loads(handle.read())
-            logger.debug(res)
-            return res
-        except Exception as e:
-            retry_count += 1
-            logger.info("Retrying to connect to api...")
-            logger.info("Sleeping...%i seconds" % retry_count)
-            sleep(retry_count)
-            logger.error(e)
 
 
 def chugid(runas):
@@ -358,10 +302,6 @@ def setup_logging(log_level, syslog_level, facility):
 def main():
     option_parser = OptionParser()
     (options, args) = option_parser.parse_args()
-
-    # check for --version
-    if options.version:
-        exit(__version__)
 
     setup_logging(
         option_parser.LOG_LEVELS[options.log_level],

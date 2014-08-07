@@ -25,7 +25,7 @@ setup(
     description=doc[0],
     long_description='\n'.join(doc[2:]),
     version=__version__,
-    packages=find_packages(),
+    packages=find_packages(exclude=['test']),
     namespace_packages=["cleverdb"],
     install_requires=requirements,
     entry_points = """
