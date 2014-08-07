@@ -1,3 +1,10 @@
+cleverdb-agent (0.2.11) UNRELEASED; urgency=medium
+
+  * Support checksum with upload
+  * Fix fabric issue
+
+ -- Kien Pham <kien@sendgrid.com>  Thu, 07 Aug 2014 23:21:29 +0000
+
 cleverdb-agent (0.2.9) unstable; urgency=medium
 
   [ Kien Pham ]

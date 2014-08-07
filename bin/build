@@ -16,10 +16,10 @@ EOT
 fi
 
 debuild clean
-rm -fr cleverdb_agent.egg-info/
+rm -rf cleverdb_agent.egg-info/
 debuild binary
 
-# TODO: move to build directory
+# move to build/ directory for easier upload and transport out of vagrant
 mkdir -p build/
 rm -rf build/*
 mv ../cleverdb-agent*.deb build/.
