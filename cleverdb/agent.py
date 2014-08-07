@@ -153,23 +153,17 @@ def run(host, db_id, api_key, master_host, master_port):
         key.write(config['ssh_private_key'])
         key.close()
 
-        ssh_options = ["ssh"]
-
         # TODO: generate 2 key pair so we don't have to ignore host checking
-        ssh_options.append("-o")
-        ssh_options.append("UserKnownHostsFile=/dev/null")
-        ssh_options.append("-o")
-        ssh_options.append("StrictHostKeyChecking=no")
-
-        ssh_options.append("-N")
-        ssh_options.append("-R")
-        ssh_options.append(local_part)
-        ssh_options.append(
-            byte_string("%s@%s" % (config['user'], config['ip'])))
-        ssh_options.append("-i")
-        ssh_options.append(key.name)
-        ssh_options.append("-p")
-        ssh_options.append(byte_string(config['port']))
+        ssh_options = [
+            "ssh",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "StrictHostKeyChecking=no",
+            "-N",
+            "-R", local_part,
+            byte_string("%s@%s" % (config['user'], config['ip'])),
+            "-i", key.name,
+            "-p", byte_string(config['port'])
+        ]
 
         # start the SSH tunnel
         logger.info("Starting SSH tunnel...")
