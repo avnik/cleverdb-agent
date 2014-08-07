@@ -1,7 +1,12 @@
+cleverdb-agent (0.2.5) unstable; urgency=medium
+
+  * Purge configs on "apt-get purge cleverdb-agent"
+
+ -- Alexander V. Nikolaev <avn@daemon.hole.ru>  Thu, 07 Aug 2014 20:45:51 +0300
+
 cleverdb-agent (0.2.4) UNRELEASED; urgency=medium
 
   * Add uploader script: cleverdb upload
-  * 
 
  -- Alexander V. Nikolaev <vagrant@vagrant-ubuntu-trusty-64>  Fri, 01 Aug 2014 21:47:32 +0000
 
