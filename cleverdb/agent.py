@@ -56,7 +56,7 @@ class OptionParser(optparse.OptionParser):
     ]
 
     def __init__(self):
-        optparse.OptionParser.__init__(self)
+        optparse.OptionParser.__init__(self, version=__version__)
         self.add_option(
             '-l', '--log-level',
             choices=list(self.LOG_LEVELS),
@@ -112,13 +112,6 @@ class OptionParser(optparse.OptionParser):
             action='append',
             dest='configs',
             default=[]
-        )
-        self.add_option(
-            '--version',
-            help='version of the agent',
-            dest='version',
-            action='store_true',
-            default=False
         )
 
 
