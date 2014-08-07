@@ -16,6 +16,7 @@ EOT
 fi
 
 debuild clean
+rm -fr cleverdb_agent.egg-info/
 debuild binary
 
 # TODO: move to build directory
