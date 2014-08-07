@@ -167,52 +167,7 @@ printf "\033[34m* Starting the $app_name...\n\033[0m\n"
 $sudo_cmd /etc/init.d/cleverdb-agent start
 printf "\033[34m* $app_name started.\n\033[0m\n"
 
-mysql_dump(){
-	echo "What is your MySQL database name?"
-	read db_name
 
-	echo "What is your MySQL database username? [root]"
-	read db_username
-
-	if [ "$db_username" == "" ]; then
-		db_username="root"
-	fi
-
-	echo "What is your MySQL database password?"
-	read -s db_password
-
-	printf "\033[34m* Dumping your database to file...\n\033[0m\n"
-	mysqldump -u $db_username --password=$db_password --opt --master-data $db_name > $db_name.sql
-	printf "\033[34m* MySQL database dump completed.\n\033[0m\n"
-}
-
-upload_dump(){
-	printf "\033[34m* Uploading your database dump...\n\033[0m\n"
-	$sudo_cmd cleverdb-upload $db_name.sql
-	printf "\033[34m* Upload finished.\n\033[0m\n"
-}
-
-echo "Do you want to do a MySQL dump of your database now? (Note: it will lock your tables)"
-echo "Please select 1 or 2"
-select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) mysql_dump; upload_dump; break;;
-        No ) printf "\033[34m* Skipping MySQL dump...\n\033[0m\n"; break;;
-    esac
-done
-
-# Metrics are submitted, echo some instructions and exit
 printf "\033[32m
-$app_name is running and functioning properly. It will continue to run in the
-background.
-
-If you ever want to stop the $app_name, run:
-
-    sudo /etc/init.d/$app_name stop
-
-And to run it again run:
-
-    sudo /etc/init.d/$app_name start
-
+$app_name is running and functioning properly. Please refer to the website $app_url for additional instructions.
 \033[0m"
-
