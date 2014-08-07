@@ -1,8 +1,9 @@
-cleverdb-agent (0.2.8) unstable; urgency=medium
+cleverdb-agent (0.2.9) unstable; urgency=medium
 
+  [ Kien Pham ]
   * Build without virtualenv activated
 
- -- Kien Pham <kien@sendgrid.com>  Thu, 07 Aug 2014 20:51:51 +0300
+ -- Alexander V. Nikolaev <avn@daemon.hole.ru>  Fri, 08 Aug 2014 01:55:43 +0300
 
 cleverdb-agent (0.2.7) unstable; urgency=medium
 
