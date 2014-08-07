@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 from cleverdb.version import __version__
 
 
-## Requirements only for development builds using pip,
+# # Requirements only for development builds using pip,
 ## This package haven't any runtime dependencies outside standard library
 ## and setuptools
 requirements = ["setuptools"]
@@ -16,7 +16,8 @@ try:
 except ImportError:
     pass
 else:
-    requirements.extend([str(ir.req) for ir in parse_requirements("requirements.txt")])
+    requirements.extend(
+        [str(ir.req) for ir in parse_requirements("requirements.txt")])
 
 doc = __doc__.splitlines()
 
@@ -28,7 +29,7 @@ setup(
     packages=find_packages(exclude=['test']),
     namespace_packages=["cleverdb"],
     install_requires=requirements,
-    entry_points = """
+    entry_points="""
     [console_scripts]
     cleverdb-agent=cleverdb.agent:main
     cleverdb-upload=cleverdb.upload:main
