@@ -1,8 +1,8 @@
 import logging
 import json
-import base64
 from time import sleep
 from cleverdb.compat import *
+from cleverdb.version import __version__
 
 
 logger = logging.getLogger("cleverdb-agent")
@@ -27,13 +27,9 @@ def get_tunnel_config(host, db_id, api_key):
     "password": "xNudfraNTlVhRaVkoRcDWQcc"
     }
     """
-    # TODO: remove basic auth
-    auth = base64.encodestring(
-        byte_string('{}:{}'.format('cleverdb', 'c13VRvDblc')))[:-1]
-    url = '%s/v1/agent/%s/configuration?api_key=%s' % (
-        host, db_id, api_key)
+    url = '{}/v1/agent/{}/configuration?api_key={}&version={}'.format(
+        host, db_id, api_key, __version__)
     req = urllib.Request(url)
-    req.add_header("Authorization", "Basic %s" % auth)
 
     retry_count = 0
     while True:
