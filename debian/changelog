@@ -1,3 +1,10 @@
+cleverdb-agent (0.2.13) unstable; urgency=medium
+
+  * Add explicit dependency for python-setuptools
+  * Set proper version in version.py
+
+ -- Alexander V. Nikolaev <avn@daemon.hole.ru>  Fri, 08 Aug 2014 21:28:32 +0300
+
 cleverdb-agent (0.2.12) unstable; urgency=medium
 
   [ Kien Pham ]
