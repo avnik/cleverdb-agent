@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# get what apt env to deploy to
+if [ -n "$1" ]; then
+	apt_repo_env="stable"
+else
+	apt_repo_env=$1
+fi
+
 # deploy using Fabric
 scp -i ../cleverdb-deploy/keys/cleverdb-web.pem build/cleverdb-agent*.deb ubuntu@apt.cleverdb.io:/tmp/latest.deb
-fab -H ubuntu@apt.cleverdb.io -i ../cleverdb-deploy/keys/cleverdb-web.pem deploy
+fab -H ubuntu@apt.cleverdb.io -i ../cleverdb-deploy/keys/cleverdb-web.pem deploy:$apt_repo_env

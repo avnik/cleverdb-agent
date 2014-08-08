@@ -5,6 +5,7 @@ gist_request=/tmp/agent-gist-request.tmp
 gist_response=/tmp/agent-gist-response.tmp
 yum_repo="https://yum.cleverdb.io"
 apt_repo="https://apt.cleverdb.io"
+apt_repo_env="stable"
 apt_key_repo="hkp://apt.cleverdb.io:80"
 app_name=cleverdb-agent
 app_path=/opt/sendgridlabs/cleverdb-agent
@@ -100,6 +101,10 @@ print_missing_key_error() {
     exit 1;
 }
 
+if [ -n "$CD_ENV" ]; then
+    apt_repo_env=$CD_ENV
+fi
+
 if [ -n "$CD_API_KEY" ]; then
     apikey=$CD_API_KEY
 else
@@ -130,7 +135,7 @@ if [ $OS == "RedHat" ]; then
 elif [ $OS == "Debian" -o $OS == "Ubuntu" ]; then
     printf "\033[34m\n* Installing APT package sources\n\033[0m\n"
 
-    $sudo_cmd sh -c "echo 'deb $apt_repo staging main' > /etc/apt/sources.list.d/$app_name.list"
+    $sudo_cmd sh -c "echo 'deb $apt_repo $apt_repo_env main' > /etc/apt/sources.list.d/$app_name.list"
     $sudo_cmd wget -O - $apt_repo/key.asc | $sudo_cmd apt-key add -
 
     printf "\033[34m\n* Installing the $app_name package\n\033[0m\n"
