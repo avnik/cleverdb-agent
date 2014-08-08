@@ -12,6 +12,7 @@ Package: cleverdb-agent
 Architecture: all
 Depends: ${shlibs:Depends},
   python-pkg-resources,
+  python-setuptools,
   ${python:Depends},
   ${misc:Depends},
   lsb-base,
