@@ -133,6 +133,10 @@ if [ $OS == "RedHat" ]; then
 	$sudo_cmd yum -y install $app_name
 
 elif [ $OS == "Debian" -o $OS == "Ubuntu" ]; then
+	# this is required for https apt repo
+	printf "\033[34m\n* Installing apt-transport-https\n\033[0m\n"
+	$sudo_cmd apt-get install -y --force-yes apt-transport-https
+
     printf "\033[34m\n* Installing APT package sources\n\033[0m\n"
 
     $sudo_cmd sh -c "echo 'deb $apt_repo $apt_repo_env main' > /etc/apt/sources.list.d/$app_name.list"
