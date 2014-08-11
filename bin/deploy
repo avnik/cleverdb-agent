@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # get what apt env to deploy to
-apt_repo_env="staging"
+apt_repo_env="unstable"
+
 if [ "$1" == "stable" ]; then
 	apt_repo_env="stable"
 	fab -H ubuntu@apt.cleverdb.io -i ../cleverdb-deploy/keys/cleverdb-web.pem deploy_production
