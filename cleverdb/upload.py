@@ -58,7 +58,8 @@ class OptionParser(optparse.OptionParser):
     ]
 
     def __init__(self):
-        optparse.OptionParser.__init__(self, version=__version__)
+        optparse.OptionParser.__init__(self, version=__version__,
+                                       usage='usage: %prog [options] filename')
         self.add_option(
             '-l', '--log-level',
             choices=list(self.LOG_LEVELS),
@@ -73,27 +74,30 @@ class OptionParser(optparse.OptionParser):
             '--confdir',
             action='store',
             dest="confdir",
-            default="/etc/cleverdb-agent"
+            default="/etc/cleverdb-agent",
+            help="directory to store config files"
         )
         self.add_option(
             '--config',
             action='append',
             dest='configs',
-            default=[]
+            default=[],
+            help='additional config files'
         )
         self.add_option(
             '--rsync',
             action='store_true',
             default=False,
-            dest='rsync'
+            dest='rsync',
+            help='upload file using rsync'
         )
 
 
 def run(uploader, host, db_id, api_key, filename):
     retry_count = 0
-
     global prog, temps
 
+    logger.info("Uploading file...")
     while True:
         # get config from api:
         config = get_tunnel_config(host, db_id, api_key)
@@ -111,11 +115,13 @@ def run(uploader, host, db_id, api_key, filename):
             checksum_file.write("{} {}\n".format(checksum(filename), dump_file))
             checksum_file.close()
             uploader(config, key.name, checksum_file.name,
-                    "/uploads/{}.checksum".format(db_id))
+                     "/uploads/{}.checksum".format(db_id))
 
             uploader(config, key.name, filename,
                      "/uploads/{}".format(dump_file))
-
+            logger.info("File uploaded successfully. "
+                        "Please refer to the website for additional "
+                        "instructions.")
         except Exception as e:
             logger.debug(e)
         else:
@@ -127,9 +133,9 @@ def run(uploader, host, db_id, api_key, filename):
         # ssh tunnel broken at this point
         # retry getting latest config from api:
         retry_count += 1
-        logger.info("Sleeping...%i seconds" % retry_count)
+        logger.debug("Sleeping...%i seconds" % retry_count)
         sleep(retry_count)
-        logger.info("Retrying upload file...%i" % retry_count)
+        logger.info("Retry uploading file...%i" % retry_count)
 
 
 def scp_cp(config, keyfile, src, dst):
@@ -200,15 +206,14 @@ def checksum(filename):
 
 def setup_logging(log_level):
     logging.basicConfig(level=log_level)
-    logger.info("Logger initialized")
 
 
 def main():
     option_parser = OptionParser()
     (options, args) = option_parser.parse_args()
-    if len(args) != 1:
-        sys.stderr.write("Missing filename\n")
-        sys.exit(1)
+
+    if len(args) != 1 or not os.path.isfile(args[0]):
+        option_parser.error('A valid filename is required to upload')
 
     setup_logging(
         option_parser.LOG_LEVELS[options.log_level],
