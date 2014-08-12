@@ -10,6 +10,10 @@ Vagrant.configure("2") do |config|
     c.vm.network "private_network", ip: "192.168.100.2"
     c.vm.box = "trusty-server-cloudimg-amd64-vagrant-disk1"
   	c.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+  	c.vm.provision "shell" do |s|
+		s.inline = "apt-get update -y; apt-get install devscripts ruby-dev ruby python-setuptools gcc -y; gem install bundler; cd /home/vagrant/cleverdb-agent && bundle install"
+		s.privileged = true
+	end
   end
 
   # centos:
@@ -17,5 +21,10 @@ Vagrant.configure("2") do |config|
   	c.vm.network "private_network", ip: "192.168.100.3"
     c.vm.box = "centos65-x86_64-20140116"
   	c.vm.box_url = "https://github.com/2creatives/vagrant-centos/releases/download/v6.5.3/centos65-x86_64-20140116.box"
+  	c.vm.provision "shell" do |s|
+		s.inline = "yum update -y; yum install ruby-devel rubygems gcc python-setuptools -y; gem install bundler; cd /home/vagrant/cleverdb-agent && bundle install"
+		s.privileged = true
+	end
+
   end
 end

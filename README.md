@@ -16,10 +16,9 @@ This agent support the following:
 ## Testing ##
 	bin/test
 	
-## Bulding Packages ##
+## Bulding Debian (.deb) Package ##
 	# turn on Ubuntu vagrant box and go inside it
-	vagrant up ubuntu
-	vagrant ssh ubuntu
+	vagrant up ubuntu && vagrant ssh ubuntu
 	
 	# modify changelog
 	debchange -i 
@@ -28,8 +27,17 @@ This agent support the following:
 	cleverdb/version.py
 	
 	# go inside the cleverdb-agent directory and build
-	cd cleverdb-agent
-	bin/build	
+	cd cleverdb-agent && bin/build	
+
+## Bulding RedHat (.rpm) Package ##
+	# turn on CentOS vagrant box and go inside it
+	vagrant up centos && vagrant ssh ubuntu
+	
+	# bump up version inside Python script
+	cleverdb/version.py
+	
+	# go inside the cleverdb-agent directory and build
+	cd cleverdb-agent && bin/build
 
 ## Deploy Packages ##
 	# deploy package to staging (unstable) repo

@@ -1,25 +1,96 @@
 #!/bin/sh
 set -e
 
-cat <<EOT
-This is convinience script, use tools like git-buildpackage strongly encouraged.
-EOT
+# Build Debian package .deb
+build_deb() {
+	echo "Building deb..."
+	debuild clean
+	rm -rf cleverdb_agent.egg-info/
+	debuild binary
 
-if ! test -x /usr/bin/debuild; then
-    cat <<EOT
-You need to install devscripts package to proceed with build.
-Example:
-  apt-get install devscripts
+	# move to build/ directory for easier upload and transport out of vagrant
+	mv ../cleverdb-agent*.deb build/.
+}
 
-Later build process can ask to install more build requirements
-EOT
-fi
+load_package_metadata() {
+	APP_NAME="$(python setup.py --name)"
+	VERSION="$(python setup.py --version)"
+	LICENSE="$(python setup.py --license)"
+	MAINTAINER="$(python setup.py --maintainer) <$(python setup.py --maintainer-email)>"
+	DESCRIPTION="$(python setup.py --description)"
+	URL="$(python setup.py --url)/tree/$(git rev-parse HEAD)"
+	CATEGORY="Development/Libraries"
+	VENDOR="SendGrid"
+	BUILD_NUMBER=0
+	TARGET_RPM="build/${APP_NAME}-${VERSION}-${BUILD_NUMBER}.el6.noarch.rpm"
+	DEFAULT_DEPLOY_ROOT="/opt/sendgrid"
+	DEFAULT_DEPLOY_PATH="${DEFAULT_DEPLOY_ROOT}/${APP_NAME}/current"
+	DEFAULT_DEPLOY_VENV="${DEFAULT_DEPLOY_PATH}/venv"
+	BUILD_PATH='build/'
+#	PIP_CONFIG_FILE=".pip/pip.conf"
+	BUILD_APP_RELATIVE_PATH="${APP_NAME}/current"
+	BUILD_APP_PATH="${BUILD_PATH}/${BUILD_APP_RELATIVE_PATH}"
+	VENV_PATH="${BUILD_APP_PATH}/venv"
+	VENV_ACTIVATE="${VENV_PATH}/bin/activate"
+	VENV_FULLPATH="${APP_PATH}/${VENV_PATH}"
 
-debuild clean
-rm -rf cleverdb_agent.egg-info/
-debuild binary
+	DEPENDENCIES=" --depends python2.7"
+	#for dependency in $( cat .project.yml | shyaml get-values os_dependencies.centos.6.x86_64 ); do
+	#DEPENDENCIES+=" --depends $dependency"
+	#done
 
-# move to build/ directory for easier upload and transport out of vagrant
+}
+
+# Build RedHat package .rpm
+build_rpm() {
+	echo "Building rpm..."
+	#--after-install bin/after-install \
+    #--after-remove bin/after-remove \
+#    --rpm-user sendgrid \
+#    --rpm-group sg-local \
+#	--replaces ${APP_NAME} \
+#	./etc/rsyslog/cleverdb-agent.conf=../../etc/rsyslog.d/40-cleverdb-agent.conf \
+#	./etc/init/cleverdb-agent.conf=../../etc/init/cleverdb-agent.conf \
+#   ./etc/sysconfig/cleverdb-agent=../../etc/sysconfig/cleverdb-agent \
+
+	fpm_cmd="fpm \
+	--verbose \
+	--force \
+    -s dir \
+    -t rpm \
+    --architecture all \
+    --name ${APP_NAME} \
+    --version ${VERSION} \
+    --iteration ${BUILD_NUMBER}.el6 \
+    --package ${TARGET_RPM} \
+    --category '${CATEGORY}' \
+    --vendor '${VENDOR}' \
+    --license '${LICENSE}' \
+    --description '${DESCRIPTION}' \
+    --url '${URL}' \
+    --prefix ${DEFAULT_DEPLOY_ROOT} \
+    ${DEPENDENCIES} \
+    -C ${BUILD_PATH} \
+    ."
+
+	echo "#########################################################"
+	echo "Packaging RPM ${TARGET_RPM}..."
+	echo "FPM COMMAND: $fpm_cmd"
+	echo "#########################################################"
+
+	eval $fpm_cmd
+}
+
+# clean build
 mkdir -p build/
 rm -rf build/*
-mv ../cleverdb-agent*.deb build/.
+
+load_package_metadata
+# OS/Distro detection
+if [ -f /etc/lsb-release ]; then
+    build_deb
+elif [ -f /etc/redhat-release ]; then
+    build_rpm
+fi
+
+echo "Build completed"
