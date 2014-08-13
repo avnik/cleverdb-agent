@@ -8,5 +8,5 @@ def deploy_staging():
 
 
 def deploy_production():
-    run('reprepro -b /srv/www/apt.cleverdb.io/ copy stable staging '
+    run('reprepro -b /srv/www/apt.cleverdb.io/ copy stable unstable '
         'cleverdb-agent')
