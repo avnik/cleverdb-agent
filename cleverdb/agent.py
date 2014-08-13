@@ -151,6 +151,8 @@ def run(host, db_id, api_key, master_host, master_port):
             "ssh",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "StrictHostKeyChecking=no",
+            "-o", "ServerAliveInterval=30",
+            "-o", "ServerAliveCount=3",
             "-N",
             "-R", local_part,
             byte_string("%s@%s" % (config['user'], config['ip'])),
