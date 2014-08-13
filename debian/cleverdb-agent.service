@@ -1,0 +1,15 @@
+[Unit]
+Description=CleverDB agent
+After=network.target syslog.target
+ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/cleverdb-agent
+ExecStart=/usr/bin/cleverdb-agent
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=sshd.service
