@@ -1,0 +1,8 @@
+#!/bin/sh -e
+$(dirname $0)/build_srpm
+docker build --force-rm -t sendgrid/rpmbuild rpm
+for file in $(find rpmbuild -name \*.src.rpm); do
+    srpm=$(basename $file)
+    docker run  --rm -v $(pwd):/host sendgrid/rpmbuild /host/rpm/build_inner "$srpm" $(id -u)
+done
+
