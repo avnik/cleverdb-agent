@@ -4,8 +4,13 @@ The cleverdb-agent will open a secure tunnel to cleverdb service
 """
 
 from setuptools import setup, find_packages
-from cleverdb.version import __version__
+import sys
+import os
 
+versionfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "cleverdb", "version.py"))
+context = {}
+exec(open(versionfile, "r").read(), context)
+__version__ = context["__version__"]
 
 # # Requirements only for development builds using pip,
 ## This package haven't any runtime dependencies outside standard library

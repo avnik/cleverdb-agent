@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+rpmbuild --rebuild /host/rpmbuild/SRPMS/$1
+cp -r /rpmbuild/RPMS /host/rpmbuild
+if test -n "$2"; then
+    chown -R "$2"  /host/rpmbuild/RPMS
+fi

@@ -87,7 +87,7 @@ rm -rf build/*
 
 load_package_metadata
 # OS/Distro detection
-if [ -f /etc/lsb-release ]; then
+if [ -f /etc/debian_version ]; then
     build_deb
 elif [ -f /etc/redhat-release ]; then
     build_rpm

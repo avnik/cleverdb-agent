@@ -1,0 +1,20 @@
+#!/bin/sh
+
+rm -fr rpmbuild
+mkdir rpmbuild
+mkdir rpmbuild/RPMS
+mkdir rpmbuild/SPECS
+mkdir rpmbuild/SRPMS
+mkdir rpmbuild/SOURCES
+mkdir rpmbuild/BUILDROOT
+
+NAME="$(python setup.py --name)"
+VERSION="$(python setup.py --version)"
+
+cp rpm/${NAME}.spec rpmbuild/SPECS
+cp debian/${NAME}.service rpmbuild/SOURCES
+cp rpm/${NAME}.init.sh rpmbuild/SOURCES
+cp etc/ports.conf rpmbuild/SOURCES
+
+python setup.py --no-user-cfg sdist --formats=gztar -d rpmbuild/SOURCES
+rpmbuild --define "_topdir `pwd`/rpmbuild" --define "cleverdb_agent_version 0.2.8" --define "buildid 1" -bs rpmbuild/SPECS/cleverdb-agent.spec
