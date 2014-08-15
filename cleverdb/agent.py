@@ -190,7 +190,10 @@ def run(host, db_id, api_key, master_host, master_port):
                     )
                 )
                 logger.error("SSH: {}".format(prog.stderr))
-            shutil.rmtree(temps)
+            try:
+                shutil.rmtree(temps)
+            except OSError as e:
+                pass
             temps = None
             prog = None
 
