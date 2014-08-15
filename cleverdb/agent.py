@@ -45,7 +45,6 @@ def signal_handler(signo, frame):
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGQUIT, signal_handler)
-os.setpgrp()
 
 class OptionParser(optparse.OptionParser):
     usage = '%prog'
