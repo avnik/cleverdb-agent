@@ -9,6 +9,9 @@ build/
 *.pyc
 dist/
 
+# Temporary dir for rpm generation
+rpmbuild/
+
 # Generated files from dpkg-dev
 debian/cleverdb-agent
 debian/cleverdb-agent.debhelper.log
