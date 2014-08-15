@@ -14,12 +14,21 @@ import glob
 from cleverdb.version import __version__
 from cleverdb.compat import *
 from cleverdb.api import get_tunnel_config
+from cleverdb.prctl import set_proc_deathsig
 
 logging.QUIET = 1000
 logger = logging.getLogger("cleverdb-agent")
 
 prog = None
 temps = None
+
+if set_proc_deathsig:
+    def preexec_hook():
+        logger.debug("Using prctl(SET_DEATHSIG) to tracking parent death")
+        set_proc_deathsig(signal.SIGTERM)
+else:
+    preexec_hook = None
+
 
 
 def signal_handler(signo, frame):
@@ -36,7 +45,7 @@ def signal_handler(signo, frame):
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGQUIT, signal_handler)
-
+os.setpgrp()
 
 class OptionParser(optparse.OptionParser):
     usage = '%prog'
@@ -167,8 +176,9 @@ def run(host, db_id, api_key, master_host, master_port):
 
         try:
             prog = subprocess.Popen(ssh_options,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+                                    stdout = subprocess.PIPE,
+                                    stderr = subprocess.PIPE,
+                                    preexec_fn = preexec_hook)
             prog.communicate()
         except Exception as e:
             logger.debug(e)
