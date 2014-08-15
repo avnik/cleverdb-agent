@@ -9,6 +9,7 @@ EnvironmentFile=-/etc/default/cleverdb-agent
 ExecStart=/usr/bin/cleverdb-agent
 KillMode=process
 Restart=on-failure
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
